@@ -2,7 +2,8 @@ export type Direction = 'up' | 'down' | 'left' | 'right'
 
 export type TankLevel = 'basic' | 'fast' | 'power' | 'armor'
 
-export type TankColor = 'yellow' | 'green' | 'silver' | 'red'
+/** blue / purple — gracze 3 i 4 */
+export type TankColor = 'yellow' | 'green' | 'silver' | 'red' | 'blue' | 'purple'
 
 export type TankSide = 'player' | 'bot'
 

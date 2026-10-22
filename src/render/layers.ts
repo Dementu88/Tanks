@@ -1,5 +1,5 @@
 import { Container, RenderTexture, Sprite, type Renderer as PixiRenderer } from 'pixi.js'
-import { FIELD_SIZE, ITEM_SIZE_MAP } from '../engine/constants'
+import { FIELD_SIZE, FIELD_WIDTH, ITEM_SIZE_MAP } from '../engine/constants'
 import type TerrainMap from '../engine/map/TerrainMap'
 import SpriteAtlas, { brickShapeKey } from './SpriteAtlas'
 
@@ -13,7 +13,7 @@ export function bakeTerrain(
   atlas: SpriteAtlas,
   map: TerrainMap,
 ): RenderTexture {
-  const rt = RenderTexture.create({ width: FIELD_SIZE, height: FIELD_SIZE })
+  const rt = RenderTexture.create({ width: FIELD_WIDTH, height: FIELD_SIZE })
   const temp = new Container()
 
   map.forEachSteel((x, y) => {
@@ -45,7 +45,7 @@ export function bakeForest(
   atlas: SpriteAtlas,
   map: TerrainMap,
 ): RenderTexture {
-  const rt = RenderTexture.create({ width: FIELD_SIZE, height: FIELD_SIZE })
+  const rt = RenderTexture.create({ width: FIELD_WIDTH, height: FIELD_SIZE })
   const temp = new Container()
   map.forEachForest((x, y) => {
     const s = new Sprite(atlas.get('forest'))
@@ -64,7 +64,7 @@ export function bakeRiver(
   map: TerrainMap,
   shape: 0 | 1,
 ): RenderTexture {
-  const rt = RenderTexture.create({ width: FIELD_SIZE, height: FIELD_SIZE })
+  const rt = RenderTexture.create({ width: FIELD_WIDTH, height: FIELD_SIZE })
   const temp = new Container()
   map.forEachRiver((x, y) => {
     const s = new Sprite(atlas.get(`river/${shape}`))

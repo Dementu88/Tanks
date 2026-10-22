@@ -85,12 +85,16 @@ function calculateHitTime(b1: Bullet, b2: Bullet): number {
       const hitArea: Rect = { x: b1.x, y: b2.y, width: BULLET_SIZE, height: BULLET_SIZE }
       const time1 = (b1.lastY - b2.lastY - BULLET_SIZE) / b1.speed
       const b2XAtTime1 = b2.lastX - b2.speed * time1
-      if (testCollide(hitArea, { x: b2XAtTime1, y: b2.y, width: BULLET_SIZE, height: BULLET_SIZE })) {
+      if (
+        testCollide(hitArea, { x: b2XAtTime1, y: b2.y, width: BULLET_SIZE, height: BULLET_SIZE })
+      ) {
         return time1
       }
       const time2 = (b2.lastX - b1.lastX - BULLET_SIZE) / b2.speed
       const b1YAtTime2 = b1.lastY - b1.speed * time2
-      if (testCollide(hitArea, { x: b1.x, y: b1YAtTime2, width: BULLET_SIZE, height: BULLET_SIZE })) {
+      if (
+        testCollide(hitArea, { x: b1.x, y: b1YAtTime2, width: BULLET_SIZE, height: BULLET_SIZE })
+      ) {
         return time2
       }
       return -1
@@ -99,12 +103,16 @@ function calculateHitTime(b1: Bullet, b2: Bullet): number {
       const hitArea: Rect = { x: b1.x, y: b2.y, width: BULLET_SIZE, height: BULLET_SIZE }
       const time1 = (b1.lastY - b2.lastY - BULLET_SIZE) / b1.speed
       const b2XAtTime1 = b2.lastX + b2.speed * time1
-      if (testCollide(hitArea, { x: b2XAtTime1, y: b2.y, width: BULLET_SIZE, height: BULLET_SIZE })) {
+      if (
+        testCollide(hitArea, { x: b2XAtTime1, y: b2.y, width: BULLET_SIZE, height: BULLET_SIZE })
+      ) {
         return time1
       }
       const time2 = (b1.lastX - b2.lastX - BULLET_SIZE) / b2.speed
       const b1YAtTime2 = b1.lastY - b1.speed * time2
-      if (testCollide(hitArea, { x: b1.x, y: b1YAtTime2, width: BULLET_SIZE, height: BULLET_SIZE })) {
+      if (
+        testCollide(hitArea, { x: b1.x, y: b1YAtTime2, width: BULLET_SIZE, height: BULLET_SIZE })
+      ) {
         return time2
       }
       return -1
@@ -174,6 +182,6 @@ export function explosionPosFromRects(bullet: Bullet, rects: Rect[]): { x: numbe
 }
 
 /** 撞墙/出界时，碰撞物对应的矩形（边界用特制矩形，使取边公式自然成立） */
-export function borderCollisionRect(fieldSize: number): Rect {
-  return { x: fieldSize, y: fieldSize, width: -fieldSize, height: -fieldSize }
+export function borderCollisionRect(fieldWidth: number, fieldHeight = fieldWidth): Rect {
+  return { x: fieldWidth, y: fieldHeight, width: -fieldWidth, height: -fieldHeight }
 }

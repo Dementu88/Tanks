@@ -1,4 +1,4 @@
-import { FIELD_SIZE } from '../constants'
+import { FIELD_SIZE, FIELD_WIDTH } from '../constants'
 import type { Direction } from '../types'
 
 /** 轴对齐矩形，坐标为左上角 */
@@ -27,7 +27,9 @@ export function testCollide(a: Rect, b: Rect, threshold = 0): boolean {
 
 /** rect 是否完整位于战场内 */
 export function isInField(rect: Rect): boolean {
-  return between(0, rect.x, FIELD_SIZE - rect.width) && between(0, rect.y, FIELD_SIZE - rect.height)
+  return (
+    between(0, rect.x, FIELD_WIDTH - rect.width) && between(0, rect.y, FIELD_SIZE - rect.height)
+  )
 }
 
 export const round8 = (x: number): number => Math.round(x / 8) * 8

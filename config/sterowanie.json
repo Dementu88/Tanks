@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "stick": {
+    "deadZone": 0.12,
+    "turnZone": 0.42,
+    "directionMargin": 0,
+    "modeMargin": 0,
+    "sensitivity": 1,
+    "vibration": 8,
+    "floating": false
+  },
+  "stickSize": 260,
+  "fireSize": 120
+}

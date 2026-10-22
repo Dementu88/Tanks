@@ -3,6 +3,7 @@ import type Tank from '../entities/Tank'
 import { testCollide } from '../physics/geometry'
 import type { Direction, Input } from '../types'
 import { bulletInterval, bulletLimit } from '../values'
+import type { DebugTankInfo } from '../debug'
 import type { AIContext, TankController } from './controller'
 import { digDistances, digPath } from './dig-path'
 import { determineFire, getEnv, RelativePosition } from './env'
@@ -84,6 +85,17 @@ export default class BotBrain implements TankController {
   private aimTimer = 0
   /** 见 BASE_HIT_PENALTY */
   private basePenalty = 0
+
+  /** tryb developera: stan, cel i trasa (tylko do rysowania) */
+  debug(): Pick<DebugTankInfo, 'mode' | 'goal' | 'path' | 'dig' | 'aim'> {
+    return {
+      mode: this.phase,
+      goal: this.goalIsEagle ? 'eagle' : 'wander',
+      path: this.follower.debugPoints(),
+      dig: this.digRoute,
+      aim: this.aimDirection,
+    }
+  }
 
   /** 这辆 bot 的子弹打掉了老鹰外墙的砖或打中老鹰 */
   onBaseHit(): void {

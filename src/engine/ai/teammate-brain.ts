@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, FIELD_SIZE } from '../constants'
+import { BLOCK_SIZE, FIELD_WIDTH } from '../constants'
 import type PowerUp from '../entities/PowerUp'
 import type Tank from '../entities/Tank'
 import type TerrainMap from '../map/TerrainMap'
@@ -16,6 +16,7 @@ import {
 import { defenseRoutes } from './defense'
 import { RelativePosition } from './env'
 import { scanLane, shouldDig } from './lane'
+import type { DebugTankInfo } from '../debug'
 import PathFollower from './path-follower'
 import { eagleReachSteps, eagleReachTime } from './eagle-threat'
 import {
@@ -26,7 +27,7 @@ import {
   incomingBullet,
   stepsIntoBullet,
 } from './self-defense'
-import { N, spotToTankPos } from './spots'
+import { N, NR, spotToTankPos } from './spots'
 
 const REPLAN_INTERVAL = 300
 /** bot 这么久（ms）以内能走到打得到老鹰的位置，就优先打它 */
@@ -89,7 +90,7 @@ function tankRectAt(t: number) {
 /** 停在这些 spot 上能吃到道具 */
 function spotsOn(powerUp: PowerUp): number[] {
   const spots: number[] = []
-  for (let t = 0; t < N * N; t += 1) {
+  for (let t = 0; t < N * NR; t += 1) {
     if (testCollide(powerUp.rect(), tankRectAt(t), -0.5)) spots.push(t)
   }
   return spots
@@ -100,7 +101,7 @@ function nearest(graph: DigGraph, spots: number[]): number {
 }
 
 function sidePenalty(pos: Point, side: number): number {
-  const center = pos.x + BLOCK_SIZE / 2 - FIELD_SIZE / 2
+  const center = pos.x + BLOCK_SIZE / 2 - FIELD_WIDTH / 2
   return side !== 0 && Math.sign(center) === -side ? SIDE_PENALTY : 0
 }
 
@@ -116,6 +117,17 @@ function sidePenalty(pos: Point, side: number): number {
  */
 export default class TeammateBrain implements TankController {
   private readonly follower = new PathFollower()
+
+  /** tryb developera: trasa autopilota (tylko do rysowania) */
+  debug(): Pick<DebugTankInfo, 'mode' | 'goal' | 'path' | 'dig' | 'aim'> {
+    return {
+      mode: this.digging ? 'digging' : this.evading ? 'evading' : 'autopilot',
+      goal: this.eagleThreatened ? 'guard' : null,
+      path: this.follower.debugPoints(),
+      dig: this.digging,
+      aim: null,
+    }
+  }
   private goal: Goal | null = null
   private following = false
   /** 已经在目标上，或者没有目标 */
@@ -259,7 +271,7 @@ export default class TeammateBrain implements TankController {
       .filter((t) => t !== tank && t.alive && testCollide(t.rect(), front, -0.01))
       .map((t) => t.rect())
     const rects = blockers.length > 0 ? blockers : [front]
-    for (let t = 0; t < N * N; t += 1) {
+    for (let t = 0; t < N * NR; t += 1) {
       if (rects.some((rect) => testCollide(rect, tankRectAt(t), -0.01))) {
         this.avoided.set(t, ctx.time + AVOID_DURATION)
       }
@@ -327,7 +339,7 @@ export default class TeammateBrain implements TankController {
     const dangerous = (bot: Tank) => eagleReachTime(bot, reach) <= EAGLE_THREAT_TIME
     this.eagleThreatened = bots.some(dangerous)
     const goals: Goal[] = []
-    for (let t = 0; t < N * N && bots.length > 0; t += 1) {
+    for (let t = 0; t < N * NR && bots.length > 0; t += 1) {
       if (graph.dist[t] === Infinity) continue
       const pos = spotToTankPos(t)
       // 和别的坦克重叠的格子站不上去；自己脚下这格除外（bot 出生时可能叠在玩家身上）
@@ -410,7 +422,7 @@ export default class TeammateBrain implements TankController {
         ? { x: eagle.x, y: eagle.y - 1.5 * BLOCK_SIZE }
         : { x: eagle.x + side * 1.5 * BLOCK_SIZE, y: eagle.y }
     const goals: Goal[] = []
-    for (let t = 0; t < N * N; t += 1) {
+    for (let t = 0; t < N * NR; t += 1) {
       if (graph.dist[t] === Infinity) continue
       const pos = spotToTankPos(t)
       const offset = (Math.abs(pos.x - target.x) + Math.abs(pos.y - target.y)) / 8

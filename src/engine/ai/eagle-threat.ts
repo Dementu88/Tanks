@@ -4,7 +4,7 @@ import { moveSpeed } from '../values'
 import type { AIContext } from './controller'
 import { RelativePosition } from './env'
 import { scanLane } from './lane'
-import { dirs, getTankSpot, N, spotToTankPos } from './spots'
+import { dirs, getTankSpot, N, NR, spotToTankPos } from './spots'
 
 /** 打到老鹰之前最多要打穿几层砖，再多 bot 基本打不动 */
 const MAX_BRICKS = 3
@@ -18,7 +18,7 @@ export function eagleFireSpots(ctx: AIContext): number[] {
   const eagle = ctx.map.eagle
   if (eagle == null || ctx.map.eagleBroken) return []
   const result: number[] = []
-  for (let t = 0; t < N * N; t += 1) {
+  for (let t = 0; t < N * NR; t += 1) {
     if (!ctx.spots[t]?.canPass) continue
     const pos = spotToTankPos(t)
     const rel = new RelativePosition(pos, eagle)
@@ -35,7 +35,7 @@ export function eagleFireSpots(ctx: AIContext): number[] {
 
 /** 每个 spot 走到最近的开火位要几步（每步 8px） */
 export function eagleReachSteps(ctx: AIContext): Int32Array {
-  const dist = new Int32Array(N * N).fill(-1)
+  const dist = new Int32Array(N * NR).fill(-1)
   let frontier = eagleFireSpots(ctx)
   for (const t of frontier) dist[t] = 0
   let step = 0

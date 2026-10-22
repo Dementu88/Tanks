@@ -1,3 +1,4 @@
+import { isRoomCode } from '../party/protocol'
 import { useSyncExternalStore } from 'react'
 
 /** 与原版一致：双人模式用 `?multi-players` 标记，在 choose / stage / gameover 之间透传 */
@@ -30,6 +31,24 @@ export type Route =
   | { screen: 'gallery'; tab: GalleryTab | null }
   | { screen: 'options' }
   | { screen: 'lobby'; view: LobbyView }
+  /** tryb party: telewizor jako ekran (#/tv, #/tv/1234; `?mute` wycisza, `?k=` rodzinny klucz) */
+  | {
+      screen: 'party-tv'
+      code: string | null
+      mute: boolean
+      accessKey: string | null
+      /** #/pc: gra na samym komputerze — klawiatura i pady jako gracze */
+      pc: boolean
+    }
+  /** tryb party: szybkie testy na PC — TV i pad obok siebie, pad z klawiatury (#/test) */
+  | { screen: 'party-test' }
+  | { screen: 'control-lab' }
+  | { screen: 'control-lab-pad'; token: string }
+  /** tryb developera: gra + panel statystyk, sztuczek i podglądu animacji (#/dev) */
+  | { screen: 'party-dev' }
+  /** tryb party: telefon jako pad (#/pad/1234?k=…) */
+  /** `?gracz=1` — zawsze ten gracz (przejmuje go od innego telefonu); używa tego #/test */
+  | { screen: 'party-pad'; code: string | null; accessKey: string | null; player: number | null }
 
 /** 地址栏里可能出现 "%" 这样的非法编码；解不开就原样返回，交给后面的无效路由回退 */
 function decodeSegment(segment: string): string {
@@ -73,6 +92,35 @@ export function parseHash(hash: string): Route {
       return { screen: 'options' }
     case 'lobby':
       return { screen: 'lobby', view: a === 'create' || a === 'room' ? a : 'list' }
+    case 'tv':
+    case 'pc': {
+      const params = new URLSearchParams(queryIndex === -1 ? '' : raw.slice(queryIndex + 1))
+      return {
+        screen: 'party-tv',
+        code: isRoomCode(a) ? a : null,
+        mute: params.has('mute'),
+        accessKey: params.get('k'),
+        pc: head === 'pc',
+      }
+    }
+    case 'test':
+      return { screen: 'party-test' }
+    case 'sterowanie':
+      return { screen: 'control-lab' }
+    case 'sterowanie-pad':
+      return { screen: 'control-lab-pad', token: a ?? '' }
+    case 'dev':
+      return { screen: 'party-dev' }
+    case 'pad': {
+      const params = new URLSearchParams(queryIndex === -1 ? '' : raw.slice(queryIndex + 1))
+      const player = Number(params.get('gracz'))
+      return {
+        screen: 'party-pad',
+        code: isRoomCode(a) ? a : null,
+        accessKey: params.get('k'),
+        player: player === 1 || player === 2 ? player - 1 : null,
+      }
+    }
     default:
       // 原版未匹配的路径一律渲染标题页
       return { screen: 'title' }

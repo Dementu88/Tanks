@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, FIELD_SIZE } from '../constants'
+import { BLOCK_SIZE, FIELD_SIZE, FIELD_WIDTH } from '../constants'
 import type TerrainMap from '../map/TerrainMap'
 import type { Point } from '../types'
 import { digDistances, diggable, digPath, hasBricks } from './dig-path'
@@ -13,7 +13,7 @@ function toSpot(pos: Point): number | null {
   if (
     pos.x < 0 ||
     pos.y < 0 ||
-    pos.x > FIELD_SIZE - BLOCK_SIZE ||
+    pos.x > FIELD_WIDTH - BLOCK_SIZE ||
     pos.y > FIELD_SIZE - BLOCK_SIZE
   ) {
     return null

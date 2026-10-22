@@ -14,6 +14,8 @@ export interface TankInit {
   hp?: number
   helmetDuration?: number
   withPowerUp?: boolean
+  /** poziom czołgu gracza 1–5 (gwiazdki); wrogowie 0 */
+  rank?: number
 }
 
 /**
@@ -31,7 +33,14 @@ export default class Tank {
   /** 是否在本帧发生平移（驱动履带动画） */
   moving = false
   hp: number
+  maxHp: number
+  xpSpeedMultiplier = 1
+  xpFireRateMultiplier = 1
+  xpBulletSpeedMultiplier = 1
+  xpExtraHp = 0
   alive = true
+  /** poziom czołgu gracza 1–5 (gwiazdki w trakcie sesji); 0 = wróg */
+  rank: number
 
   /** 转向预留坐标：沿当前移动轴吸附到 8 的倍数后的落点，供垂直转向时对齐使用 */
   rx: number
@@ -63,8 +72,10 @@ export default class Tank {
     this.rx = init.x
     this.ry = init.y
     this.hp = init.hp ?? 1
+    this.maxHp = this.hp
     this.helmetDuration = init.helmetDuration ?? 0
     this.withPowerUp = init.withPowerUp ?? false
+    this.rank = init.rank ?? 0
   }
 
   rect(): Rect {

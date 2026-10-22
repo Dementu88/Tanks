@@ -1,6 +1,9 @@
 import BattleScene from './BattleScene'
+import type { SessionBonuses } from './sessionXp'
 import { AUTOPILOT_IDLE, AUTOPILOT_START, frame, INITIAL_LIVES } from './constants'
 import TerrainMap from './map/TerrainMap'
+import { scaleBots, startLives } from './difficulty'
+import { NO_EVENTS, type EventPort } from './events'
 import StatisticsAnimation, { type StatisticsView } from './StatisticsAnimation'
 import { expandBots, parseStage } from './map/parseStage'
 import { round, type SessionSnapshot } from './snapshot'
@@ -30,6 +33,8 @@ export type Pilot = 'human' | 'autopilot'
 
 /** 跨关保留的玩家状态，BattleScene 持有同一引用并原地修改 */
 export interface PlayerState {
+  /** identyfikator gracza w zdarzeniach (tryb party: telefon / profil); domyślnie p1, p2… */
+  id: string
   control: PlayerControl
   color: TankColor
   spawnPos: Point
@@ -37,6 +42,8 @@ export interface PlayerState {
   score: number
   /** 上一关结束时存活坦克的等级；下一关直接以该等级出生且不扣命 */
   reservedTankLevel: TankLevel | null
+  /** poziom 1–5 przeniesiony do następnej planszy (razem z reservedTankLevel) */
+  reservedRank: number | null
   /** 跨关保留：上一关结束时托管的玩家，下一关出生后仍由 AI 驾驶 */
   pilot: Pilot
   /** 坦克可以操作、本关胜负未定时连续没有按键的时间（ms） */
@@ -45,14 +52,19 @@ export interface PlayerState {
   touchedThisStage: boolean
 }
 
-export type PlayerConfig = Pick<PlayerState, 'control' | 'color' | 'spawnPos'>
+export type PlayerConfig = Pick<PlayerState, 'control' | 'color' | 'spawnPos'> & { id?: string }
 
 /** 开局时确定、整局不变的选项；GameSession 原样传给每一关的 BattleScene */
 export interface SessionOptions {
+  sessionBonuses?: () => SessionBonuses
   /** Options 页的托管开关；false 时不计空闲、不托管 */
   autopilot: boolean
   /** 引擎内所有随机决策的来源；测试传 seededRandom 以便复现 */
   random: () => number
+  /** odbiorca zdarzeń rozgrywki (osiągnięcia, XP); brak = zdarzenia giną */
+  events?: EventPort
+  /** poziom trudności (indeks w config/gra.json „poziomy”); brak = domyślny (Normalny) */
+  difficulty?: number
 }
 
 /**
@@ -83,15 +95,21 @@ export default class GameSession {
     private readonly options: SessionOptions,
   ) {
     this.stageIndex = startStageIndex
-    this.players = playerConfigs.map((config) => ({
+    this.players = playerConfigs.map((config, i) => ({
       ...config,
-      lives: INITIAL_LIVES,
+      id: config.id ?? `p${i + 1}`,
+      lives: options.difficulty == null ? INITIAL_LIVES : startLives(options.difficulty),
       score: 0,
       reservedTankLevel: null,
+      reservedRank: null,
       pilot: 'human',
       idleTime: 0,
       touchedThisStage: false,
     }))
+  }
+
+  private get events(): EventPort {
+    return this.options.events ?? NO_EVENTS
   }
 
   get stage(): RawStageConfig {
@@ -239,11 +257,17 @@ export default class GameSession {
     this.scene = new BattleScene(
       TerrainMap.fromRaw(raw),
       this.audio,
-      expandBots(parseStage(raw).bots),
+      scaleBots(expandBots(parseStage(raw).bots), this.players.length, this.options.difficulty),
       this.players,
       this.stageIndex + 1,
       this.options,
     )
+    this.events.emit({
+      type: 'stage_started',
+      stageName: raw.name,
+      stageNumber: this.stageIndex + 1,
+      playerIds: this.players.map((p) => p.id),
+    })
   }
 
   private stepPlaying(delta: number, input: InputManager): void {
@@ -275,6 +299,19 @@ export default class GameSession {
   }
 
   private startStatistics(scene: BattleScene): void {
+    if (scene.status === 'won') {
+      this.events.emit({
+        type: 'stage_cleared',
+        stageName: this.stage.name,
+        stageNumber: this.stageIndex + 1,
+        duration: round(scene.time),
+        players: this.players.map((p, i) => ({
+          playerId: p.id,
+          score: p.score,
+          kills: { ...scene.killInfo[i] },
+        })),
+      })
+    }
     this.statisticsAnimation = new StatisticsAnimation(
       this.stage.name,
       scene.killInfo,
@@ -301,6 +338,11 @@ export default class GameSession {
       }
       // 通关不升起 GAME OVER，直接进入结束页显示 CONGRATULATIONS
       this.cleared = true
+      this.events.emit({
+        type: 'game_cleared',
+        stageName: this.stage.name,
+        scores: this.players.map((p) => ({ playerId: p.id, score: p.score })),
+      })
       this.enterPhase('ended')
       return
     }
@@ -308,6 +350,12 @@ export default class GameSession {
   }
 
   private startGameover(): void {
+    this.events.emit({
+      type: 'game_over',
+      stageName: this.stage.name,
+      stageNumber: this.stageIndex + 1,
+      reason: this.scene?.loseReason ?? 'dead',
+    })
     this.audio.play('game_over')
     this.enterPhase('gameover')
   }

@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import audio from './audio/AudioManager'
 import App from './ui/App'
+import './party/hudTheme.css'
 
 const container = document.getElementById('root')
 if (container == null) {

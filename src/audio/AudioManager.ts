@@ -1,5 +1,19 @@
 import type { AudioPort, SoundName } from '../engine/types'
 
+export const VOLUME_LEVELS = { minimum: 0.15, middle: 0.5, max: 1 } as const
+export type VolumeLevel = keyof typeof VOLUME_LEVELS
+const VOLUME_STORAGE = 'battle-city-volume'
+
+function savedVolume(): VolumeLevel {
+  try {
+    const level = localStorage.getItem(VOLUME_STORAGE)
+    if (level === 'minimum' || level === 'middle' || level === 'max') return level
+  } catch {
+    // Brak dostępu do pamięci przeglądarki nie blokuje dźwięku.
+  }
+  return 'middle'
+}
+
 // Vite 以 ?url 形式给出可访问 URL
 const soundUrls = import.meta.glob('./sounds/*.ogg', {
   eager: true,
@@ -17,8 +31,10 @@ function nameFromPath(path: string): string {
  * 支持同一音效重叠播放。受浏览器自动播放策略限制，首次播放前需用户手势解锁。
  * 全局单例：启动时预加载一次，各局对战共用。
  */
-class AudioManager implements AudioPort {
+export class AudioManager implements AudioPort {
   private ctx: AudioContext | null = null
+  private output: GainNode | null = null
+  private level: VolumeLevel = savedVolume()
   private readonly urls = new Map<string, string>()
   private readonly buffers = new Map<string, AudioBuffer>()
   private loading: Promise<void> | null = null
@@ -69,6 +85,32 @@ class AudioManager implements AudioPort {
 
   setMuted(muted: boolean): void {
     this.muted = muted
+    this.applyVolume()
+  }
+
+  get volumeLevel(): VolumeLevel {
+    return this.level
+  }
+
+  setVolumeLevel(level: VolumeLevel): void {
+    this.level = level
+    this.applyVolume()
+    try {
+      localStorage.setItem(VOLUME_STORAGE, level)
+    } catch {
+      // W trybie prywatnym wybór działa do zamknięcia strony.
+    }
+  }
+
+  private applyVolume(): void {
+    if (this.output != null && this.ctx != null) {
+      // Płynna zmiana obejmuje również już odtwarzane dźwięki, bez trzasku.
+      this.output.gain.setTargetAtTime(
+        this.muted ? 0 : VOLUME_LEVELS[this.level],
+        this.ctx.currentTime,
+        0.01,
+      )
+    }
   }
 
   play(name: SoundName): void {
@@ -89,7 +131,7 @@ class AudioManager implements AudioPort {
     try {
       const source = ctx.createBufferSource()
       source.buffer = buffer
-      source.connect(ctx.destination)
+      source.connect(this.output!)
       source.start()
     } catch {
       // 忽略播放异常
@@ -99,7 +141,12 @@ class AudioManager implements AudioPort {
   private ensureContext(): AudioContext | null {
     if (this.ctx == null) {
       try {
-        this.ctx = new AudioContext()
+        const ctx = new AudioContext()
+        const output = ctx.createGain()
+        output.gain.value = this.muted ? 0 : VOLUME_LEVELS[this.level]
+        output.connect(ctx.destination)
+        this.output = output
+        this.ctx = ctx
       } catch {
         return null
       }

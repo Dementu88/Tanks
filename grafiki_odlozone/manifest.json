@@ -1,0 +1,22 @@
+{
+  "czolgi/gracz/lv1/ruch": {
+    "klatki": 4,
+    "fps": 12
+  },
+  "czolgi/gracz/lv2/ruch": {
+    "klatki": 4,
+    "fps": 12
+  },
+  "czolgi/gracz/lv3/ruch": {
+    "klatki": 4,
+    "fps": 12
+  },
+  "czolgi/gracz/lv4/ruch": {
+    "klatki": 4,
+    "fps": 12
+  },
+  "czolgi/gracz/lv5/ruch": {
+    "klatki": 4,
+    "fps": 12
+  }
+}

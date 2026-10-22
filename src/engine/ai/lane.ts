@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, FIELD_SIZE, ITEM_SIZE_MAP, TANK_SIZE } from '../constants'
+import { BLOCK_SIZE, FIELD_SIZE, FIELD_WIDTH, ITEM_SIZE_MAP, TANK_SIZE } from '../constants'
 import type Tank from '../entities/Tank'
 import type TerrainMap from '../map/TerrainMap'
 import { getDirectionInfo, testCollide, type Rect } from '../physics/geometry'
@@ -65,7 +65,7 @@ function edgeDistance(pos: Point, direction: Direction): number {
     case 'left':
       return pos.x
     case 'right':
-      return FIELD_SIZE - pos.x - TANK_SIZE
+      return FIELD_WIDTH - pos.x - TANK_SIZE
   }
 }
 

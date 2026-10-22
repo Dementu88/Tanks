@@ -1,6 +1,6 @@
 {
   "name": "battle-city",
-  "version": "0.4.0",
+  "version": "0.4.6-stable",
   "description": "Battle city remake built with React 19 + PixiJS v8.",
   "author": "feichao93 (https://github.com/feichao93)",
   "license": "MIT",
@@ -43,7 +43,9 @@
     "test:watch": "vitest",
     "arena": "ARENA=1 vitest run test/arena.test.ts",
     "build:npm": "tsc --noEmit && vite build --base ./ --outDir www --emptyOutDir",
-    "prepack": "npm run build:npm"
+    "prepack": "npm run build:npm",
+    "build:party": "pnpm build:npm && vite build --ssr server/main.ts --outDir dist-server --emptyOutDir",
+    "party": "node dist-server/main.js"
   },
   "devDependencies": {
     "@types/react": "^19.0.2",
@@ -68,6 +70,8 @@
     "trailingComma": "all"
   },
   "dependencies": {
+    "@fontsource/orbitron": "5.2.8",
+    "qrcode-generator": "1.4.4",
     "ws": "^8.21.0"
   }
 }

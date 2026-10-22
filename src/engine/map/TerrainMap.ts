@@ -1,4 +1,4 @@
-import { ITEM_SIZE_MAP, N_MAP } from '../constants'
+import { FIELD_SIZE as FIELD_ROWS_PX, ITEM_SIZE_MAP, N_MAP, N_ROWS } from '../constants'
 import { testCollide, type Rect } from '../physics/geometry'
 import type { Point } from '../types'
 import { parseStage, type ParsedStage } from './parseStage'
@@ -71,7 +71,7 @@ export default class TerrainMap {
     const size = ITEM_SIZE_MAP.SNOW
     const col = Math.floor(px / size)
     const row = Math.floor(py / size)
-    if (col < 0 || col >= N_MAP.SNOW || row < 0 || row >= N_MAP.SNOW) return false
+    if (col < 0 || col >= N_MAP.SNOW || row < 0 || row >= N_ROWS.SNOW) return false
     return this.snows[row * N_MAP.SNOW + col]
   }
 
@@ -93,7 +93,7 @@ export default class TerrainMap {
     const col1 = Math.max(0, Math.floor(rect.x / size))
     const col2 = Math.min(n - 1, Math.floor((rect.x + rect.width) / size))
     const row1 = Math.max(0, Math.floor(rect.y / size))
-    const row2 = Math.min(n - 1, Math.floor((rect.y + rect.height) / size))
+    const row2 = Math.min(cells.length / n - 1, Math.floor((rect.y + rect.height) / size))
     for (let row = row1; row <= row2; row += 1) {
       for (let col = col1; col <= col2; col += 1) {
         if (cells[row * n + col]) {
@@ -128,7 +128,7 @@ export default class TerrainMap {
     const col1 = Math.max(0, Math.floor(rect.x / size))
     const col2 = Math.min(n - 1, Math.floor((rect.x + rect.width) / size))
     const row1 = Math.max(0, Math.floor(rect.y / size))
-    const row2 = Math.min(n - 1, Math.floor((rect.y + rect.height) / size))
+    const row2 = Math.min(cells.length / n - 1, Math.floor((rect.y + rect.height) / size))
     for (let row = row1; row <= row2; row += 1) {
       for (let col = col1; col <= col2; col += 1) {
         const t = row * n + col
@@ -193,6 +193,25 @@ export default class TerrainMap {
   }
 
   /** 摧毁老鹰 */
+  /** czyści całą kratkę 16×16 (start gracza 3/4 nie może wypaść w cegłach ani w wodzie) */
+  clearBlock(x: number, y: number): void {
+    const clear = (cells: boolean[], n: number, size: number) => {
+      for (let row = Math.floor(y / size); row < Math.ceil((y + 16) / size); row += 1) {
+        for (let col = Math.floor(x / size); col < Math.ceil((x + 16) / size); col += 1) {
+          if (row >= 0 && row < cells.length / n && col >= 0 && col < n) {
+            cells[row * n + col] = false
+          }
+        }
+      }
+    }
+    clear(this.bricks, N_MAP.BRICK, ITEM_SIZE_MAP.BRICK)
+    clear(this.steels, N_MAP.STEEL, ITEM_SIZE_MAP.STEEL)
+    clear(this.rivers, N_MAP.RIVER, ITEM_SIZE_MAP.RIVER)
+    clear(this.snows, N_MAP.SNOW, ITEM_SIZE_MAP.SNOW)
+    clear(this.forests, N_MAP.FOREST, ITEM_SIZE_MAP.FOREST)
+    this.version += 1
+  }
+
   destroyEagle(): void {
     this.eagleBroken = true
   }
@@ -200,10 +219,11 @@ export default class TerrainMap {
   /** 收集 rect 覆盖范围内的全部子格索引（不论是否点亮） */
   private rangeIndices(n: number, size: number, rect: Rect): number[] {
     const result: number[] = []
+    const rows = (FIELD_ROWS_PX / size) | 0
     const col1 = Math.max(0, Math.floor(rect.x / size))
     const col2 = Math.min(n - 1, Math.floor((rect.x + rect.width) / size))
     const row1 = Math.max(0, Math.floor(rect.y / size))
-    const row2 = Math.min(n - 1, Math.floor((rect.y + rect.height) / size))
+    const row2 = Math.min(rows - 1, Math.floor((rect.y + rect.height) / size))
     for (let row = row1; row <= row2; row += 1) {
       for (let col = col1; col <= col2; col += 1) {
         result.push(row * n + col)

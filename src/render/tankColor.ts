@@ -48,6 +48,8 @@ export function tankColor(
   time: number,
 ): TankColor {
   if (tank.side === 'player') {
+    const armor = ARMOR_COLORS[Math.min(4, tank.hp)]
+    if (armor != null) return pickColor(armor, time - tank.bornAt)
     return tank.color
   }
   const elapsed = time - tank.bornAt

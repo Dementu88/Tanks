@@ -2,8 +2,12 @@ import type Bullet from '../entities/Bullet'
 import type TerrainMap from '../map/TerrainMap'
 import type { Point } from '../types'
 
-/** spot graph 为 26×26（每格 8px），坦克 16×16 居中于某个 spot */
-export const N = 26
+/**
+ * spot graph 为 26×26（每格 8px），坦克 16×16 居中于某个 spot.
+ * N = kolumny (krok indeksu, rośnie na szerokiej planszy), NR = wiersze (zawsze 26)
+ */
+import { SPOT_COLS as N, SPOT_ROWS as NR } from '../constants'
+export { N, NR }
 
 export const getRow = (t: number): number => Math.floor(t / N)
 export const getCol = (t: number): number => t % N
@@ -11,7 +15,7 @@ export const getCol = (t: number): number => t % N
 export const left = (t: number): number | null => (getCol(t) === 0 ? null : t - 1)
 export const right = (t: number): number | null => (getCol(t) === N - 1 ? null : t + 1)
 export const up = (t: number): number | null => (getRow(t) === 0 ? null : t - N)
-export const down = (t: number): number | null => (getRow(t) === N - 1 ? null : t + N)
+export const down = (t: number): number | null => (getRow(t) === NR - 1 ? null : t + N)
 
 export type DirFn = (t: number) => number | null
 export const dirs: DirFn[] = [left, right, up, down]
@@ -58,8 +62,8 @@ const PASS_THRESHOLD = -0.01
 
 /** 构建整张 spot 图的可通行性（随地形变动需重建） */
 export function buildSpots(map: TerrainMap): Spot[] {
-  const spots: Spot[] = new Array(N * N)
-  for (let row = 0; row < N; row += 1) {
+  const spots: Spot[] = new Array(N * NR)
+  for (let row = 0; row < NR; row += 1) {
     for (let col = 0; col < N; col += 1) {
       const t = row * N + col
       if (row === 0 || col === 0) {

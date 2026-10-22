@@ -10,6 +10,7 @@ import InputManager from '../input/InputManager'
 import Renderer from '../render/Renderer'
 import { sharedAtlas } from '../render/SpriteAtlas'
 import BattleOverlay, { type BattleView } from './BattleOverlay'
+import { INITIAL_VIEW, toView } from './battleView'
 import StatisticsScene from './StatisticsScene'
 import { playersSearch, replace, stagePath } from './router'
 import { allStages, useUIStore } from './store'
@@ -19,30 +20,7 @@ TextureSource.defaultOptions.scaleMode = 'nearest'
 
 type LeaveAction = 'restart' | 'stage-select' | 'title'
 
-export const INITIAL_VIEW: BattleView = {
-  hudVisible: false,
-  remainingBots: 0,
-  lives: [],
-  autopilot: [],
-  canBorrowLife: [],
-  curtain: 0,
-  stageName: '',
-  gameoverProgress: null,
-}
-
-export function toView(session: GameSession): BattleView {
-  const scene = session.scene
-  return {
-    hudVisible: session.hudVisible,
-    remainingBots: scene?.remainingBotCount ?? 0,
-    lives: scene?.lives ?? [],
-    autopilot: session.players.map((p) => p.pilot === 'autopilot'),
-    canBorrowLife: scene?.canBorrowLife ?? [],
-    curtain: session.curtain,
-    stageName: session.stage.name,
-    gameoverProgress: session.phase === 'gameover' ? session.gameoverProgress : null,
-  }
-}
+export { INITIAL_VIEW, toView }
 
 export default function GameCanvas({ stageName, multi }: { stageName: string; multi: boolean }) {
   const [start, setStart] = useState({ stageName, run: 0 })

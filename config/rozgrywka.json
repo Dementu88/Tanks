@@ -1,0 +1,36 @@
+{
+  "opis": "Ustawienia wbudowywane przy budowaniu gry i serwera. Po zmianie uruchom uruchom_lokalnie_stable.bat lub aktualizuj_serwer.bat. Czasy w ms (1000 ms = 1 s). playerStartRank: poziom czołgu po starcie i odrodzeniu (1–5). XP: wspólna sesja serwera; maxLevel 1–10, startLevels 0–maxLevel, costs = cena LV1, 1–1000000 XP (kolejne kosztują 2x, 3x...). killRewards = XP za zabicie: basic zwykły, fast szybki, power mocne działo, armor opancerzony; 0–1000000, także za granat. XP nalicza się tylko przy enabled=true lub po włączeniu w lobby. speedPercent/firePercent to procent na poziom; armorHp = HP na poziom. enabled=false zachowuje klasyczną grę. Ustawienia lobby mają pierwszeństwo tylko do ponownego uruchomienia serwera. Dwa kolejne ulepszenia: bullet = szybsze pociski (bulletPercent % na poziom, 5–50), shield = dłuższa tarcza po odrodzeniu (shieldMs na poziom, 250–5000 ms).",
+  "playerStartRank": 1,
+  "playerSpawnShieldMs": 2250,
+  "enemySpawnShieldMs": 3000,
+  "bonusShieldMs": 10500,
+  "xp": {
+    "enabled": false,
+    "maxLevel": 3,
+    "startLevels": {
+      "speed": 0,
+      "fire": 0,
+      "armor": 0,
+      "bullet": 0,
+      "shield": 0
+    },
+    "costs": {
+      "speed": 10000,
+      "fire": 10000,
+      "armor": 15000,
+      "bullet": 8000,
+      "shield": 12000
+    },
+    "killRewards": {
+      "basic": 100,
+      "fast": 200,
+      "power": 300,
+      "armor": 400
+    },
+    "speedPercent": 10,
+    "firePercent": 15,
+    "armorHp": 1,
+    "bulletPercent": 20,
+    "shieldMs": 1500
+  }
+}

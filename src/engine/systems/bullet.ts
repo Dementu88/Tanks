@@ -1,5 +1,5 @@
 import { eagleGuard } from '../ai/lane'
-import { BLOCK_SIZE, BULLET_SIZE, FIELD_SIZE, STEEL_POWER } from '../constants'
+import { BLOCK_SIZE, BULLET_SIZE, FIELD_SIZE, FIELD_WIDTH, STEEL_POWER } from '../constants'
 import type Bullet from '../entities/Bullet'
 import Explosion from '../entities/Explosion'
 import type Tank from '../entities/Tank'
@@ -155,8 +155,13 @@ export function updateBullets(
       c.hitSteel = true
       c.rects.push(map.steelRectAt(t))
     }
-    const border = borderCollisionRect(FIELD_SIZE)
-    if (b.x <= 0 || b.x + BULLET_SIZE >= FIELD_SIZE || b.y <= 0 || b.y + BULLET_SIZE >= FIELD_SIZE) {
+    const border = borderCollisionRect(FIELD_WIDTH, FIELD_SIZE)
+    if (
+      b.x <= 0 ||
+      b.x + BULLET_SIZE >= FIELD_WIDTH ||
+      b.y <= 0 ||
+      b.y + BULLET_SIZE >= FIELD_SIZE
+    ) {
       c.any = true
       c.explode = true
       c.hitBorder = true
@@ -182,7 +187,7 @@ export function updateBullets(
         continue // bot→bot：穿过
       }
       c.any = true
-      if (tank.side === 'player' && tank.helmetDuration > 0) {
+      if (tank.helmetDuration > 0) {
         break // 头盔挡弹（敌方和队友的都挡），子弹消失但不伤人、不爆炸
       }
       c.explode = true

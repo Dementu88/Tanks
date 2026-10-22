@@ -1,0 +1,10 @@
+{
+  "opis": "Czołg gracza na poziomach LV1–LV5 (kolejne gwiazdki). Edytuj w trybie developera (#/dev). Prędkości w px/ms (16 px = 1 kratka), odstęp strzału w ms, spriteScale = powiększenie grafiki z pliku (tylko wygląd).",
+  "gracz": [
+    {"moveSpeed":0.045,"bulletSpeed":0.12,"bulletPower":1,"fireInterval":300,"bulletLimit":1,"spriteScale":1.5},
+    {"moveSpeed":0.045,"bulletSpeed":0.18,"bulletPower":1,"fireInterval":200,"bulletLimit":1,"spriteScale":1.5},
+    {"moveSpeed":0.045,"bulletSpeed":0.18,"bulletPower":1,"fireInterval":200,"bulletLimit":2,"spriteScale":1.5},
+    {"moveSpeed":0.045,"bulletSpeed":0.18,"bulletPower":3,"fireInterval":200,"bulletLimit":2,"spriteScale":1.5},
+    {"moveSpeed":0.045,"bulletSpeed":0.18,"bulletPower":3,"fireInterval":200,"bulletLimit":2,"spriteScale":1.5}
+  ]
+}

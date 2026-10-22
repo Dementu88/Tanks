@@ -8,3 +8,8 @@ node_modules/
 staging/
 www/
 .mcp.json
+dist-server
+deploy
+__pycache__/
+*.pyc
+*.log

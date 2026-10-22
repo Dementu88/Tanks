@@ -1,6 +1,6 @@
 import { around, getTankSpot } from '../ai/spots'
 import { calculateFireEstimateMap, getFireResist } from '../ai/fire-estimate'
-import { BLOCK_SIZE, FIELD_BLOCK_SIZE, frame } from '../constants'
+import { BLOCK_SIZE, FIELD_BLOCK_SIZE, FIELD_COLS, frame } from '../constants'
 import type PowerUp from '../entities/PowerUp'
 import type Tank from '../entities/Tank'
 import type TerrainMap from '../map/TerrainMap'
@@ -54,9 +54,10 @@ function quadrantCollisions(map: TerrainMap, x: number, y: number): number {
 /** 合法的道具生成位置：紧贴 1~3 个障碍象限（既非全空旷也非全堵死） */
 export function validPowerUpPositions(map: TerrainMap): Array<{ x: number; y: number }> {
   const positions: Array<{ x: number; y: number }> = []
-  const max = (FIELD_BLOCK_SIZE - 1) * BLOCK_SIZE
-  for (let y = 0; y < max; y += 0.5 * BLOCK_SIZE) {
-    for (let x = 0; x < max; x += 0.5 * BLOCK_SIZE) {
+  const maxY = (FIELD_BLOCK_SIZE - 1) * BLOCK_SIZE
+  const maxX = (FIELD_COLS - 1) * BLOCK_SIZE
+  for (let y = 0; y < maxY; y += 0.5 * BLOCK_SIZE) {
+    for (let x = 0; x < maxX; x += 0.5 * BLOCK_SIZE) {
       const c = quadrantCollisions(map, x, y)
       if (c >= 1 && c <= 3) {
         positions.push({ x, y })

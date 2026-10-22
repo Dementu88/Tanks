@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, FIELD_BLOCK_SIZE, N_MAP } from '../constants'
+import { BLOCK_SIZE, FIELD_BLOCK_SIZE, N_MAP, N_ROWS, setFieldCols } from '../constants'
 import type { BotGroupConfig, Point, RawStageConfig, TankLevel } from '../types'
 
 export interface ParsedStage {
@@ -89,16 +89,19 @@ function fillSteel(steels: boolean[], row: number, col: number, bits: number): v
  * 类型：X 空 / B 砖 / T 钢 / R 河 / S 雪 / F 森林 / E 老鹰
  */
 export function parseStageMap(map: string[]): Omit<ParsedStage, 'name' | 'difficulty' | 'bots'> {
-  const bricks = new Array<boolean>(N_MAP.BRICK ** 2).fill(false)
-  const steels = new Array<boolean>(N_MAP.STEEL ** 2).fill(false)
-  const rivers = new Array<boolean>(N_MAP.RIVER ** 2).fill(false)
-  const snows = new Array<boolean>(N_MAP.SNOW ** 2).fill(false)
-  const forests = new Array<boolean>(N_MAP.FOREST ** 2).fill(false)
+  // szerokość z pierwszego wiersza (13 = oryginał, więcej = szeroka plansza)
+  const cols = map[0].trim().split(/ +/).length
+  setFieldCols(cols)
+  const bricks = new Array<boolean>(N_MAP.BRICK * N_ROWS.BRICK).fill(false)
+  const steels = new Array<boolean>(N_MAP.STEEL * N_ROWS.STEEL).fill(false)
+  const rivers = new Array<boolean>(N_MAP.RIVER * N_ROWS.RIVER).fill(false)
+  const snows = new Array<boolean>(N_MAP.SNOW * N_ROWS.SNOW).fill(false)
+  const forests = new Array<boolean>(N_MAP.FOREST * N_ROWS.FOREST).fill(false)
   let eagle: Point | null = null
 
   for (let row = 0; row < FIELD_BLOCK_SIZE; row += 1) {
     const line = map[row].toLowerCase().trim().split(/ +/)
-    for (let col = 0; col < FIELD_BLOCK_SIZE; col += 1) {
+    for (let col = 0; col < cols; col += 1) {
       const item = line[col].trim()
       const type = item[0]
       if (type === 'b') {
@@ -106,11 +109,11 @@ export function parseStageMap(map: string[]): Omit<ParsedStage, 'name' | 'diffic
       } else if (type === 't') {
         fillSteel(steels, row, col, parseInt(item[1], 16))
       } else if (type === 'r') {
-        rivers[row * FIELD_BLOCK_SIZE + col] = true
+        rivers[row * cols + col] = true
       } else if (type === 's') {
-        snows[row * FIELD_BLOCK_SIZE + col] = true
+        snows[row * cols + col] = true
       } else if (type === 'f') {
-        forests[row * FIELD_BLOCK_SIZE + col] = true
+        forests[row * cols + col] = true
       } else if (type === 'e') {
         if (eagle != null) {
           throw new Error('Eagle appears more than once')

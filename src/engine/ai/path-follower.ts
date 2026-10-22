@@ -40,6 +40,15 @@ export default class PathFollower {
     return ahead > REACH_EPS ? this.segDir : null
   }
 
+  /** tryb developera: pozostałe punkty trasy (środki kratek) */
+  debugPoints(): [number, number][] {
+    if (this.done) return []
+    return this.path.slice(this.pathIndex).map((spot) => {
+      const p = spotToTankPos(spot)
+      return [p.x + 8, p.y + 8]
+    })
+  }
+
   /** 本段要走的方向，可能还没转过去；路径走完为 null */
   heading(): Direction | null {
     return this.done ? null : this.segDir

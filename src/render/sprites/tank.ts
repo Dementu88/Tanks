@@ -284,14 +284,20 @@ function drawArmorBotTank(ctx: CanvasRenderingContext2D, color: TankColor, shape
   path(ctx, 'M8,8 h1 v2 h-2 v-1 h1 v-1', a)
 }
 
-const PLAYER_DRAWERS: Record<TankLevel, (ctx: CanvasRenderingContext2D, color: TankColor, shape: Shape) => void> = {
+const PLAYER_DRAWERS: Record<
+  TankLevel,
+  (ctx: CanvasRenderingContext2D, color: TankColor, shape: Shape) => void
+> = {
   basic: drawBasicTank,
   fast: drawFastPlayerTank,
   power: drawPowerPlayerTank,
   armor: drawArmorPlayerTank,
 }
 
-const BOT_DRAWERS: Record<TankLevel, (ctx: CanvasRenderingContext2D, color: TankColor, shape: Shape) => void> = {
+const BOT_DRAWERS: Record<
+  TankLevel,
+  (ctx: CanvasRenderingContext2D, color: TankColor, shape: Shape) => void
+> = {
   basic: drawBasicBotTank,
   fast: drawFastBotTank,
   power: drawPowerBotTank,

@@ -18,7 +18,7 @@ import {
 } from './sprites/terrain'
 import { drawTank } from './sprites/tank'
 
-const TANK_COLORS: TankColor[] = ['yellow', 'green', 'silver', 'red']
+const TANK_COLORS: TankColor[] = ['yellow', 'green', 'silver', 'red', 'blue', 'purple']
 const TANK_LEVELS = ['basic', 'fast', 'power', 'armor'] as const
 const TANK_SIDES = ['player', 'bot'] as const
 

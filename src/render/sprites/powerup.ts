@@ -115,7 +115,14 @@ const DATA: Record<PowerUpName, string[]> = {
   ],
 }
 
-export const POWER_UP_NAMES: PowerUpName[] = ['tank', 'star', 'grenade', 'timer', 'helmet', 'shovel']
+export const POWER_UP_NAMES: PowerUpName[] = [
+  'tank',
+  'star',
+  'grenade',
+  'timer',
+  'helmet',
+  'shovel',
+]
 
 export function drawPowerUp(ctx: CanvasRenderingContext2D, name: PowerUpName): void {
   bitmap(ctx, DATA[name], scheme)

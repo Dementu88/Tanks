@@ -47,6 +47,9 @@ export function StatisticsContent({
   hiScore: number
 }) {
   const hiScoreText = String(hiScore)
+  if (view.counts.length > 2) {
+    return <StatisticsManyPlayers view={view} scores={scores} hiScore={hiScoreText} />
+  }
   const [p1, p2] = view.counts
   return (
     <g className="statistics-scene">
@@ -141,6 +144,73 @@ export function StatisticsContent({
 /** 托管打完的玩家标成 CPU；Ⅱ-PLAYER 已经排到屏幕右边缘，只能替换不能追加 */
 function playerTitle(numeral: string, autopilot: boolean): string {
   return `${numeral}-${autopilot ? 'CPU' : 'PLAYER'}`
+}
+
+const PLAYER_FILL = ['#feac4e', '#4ade80', '#5aa9ff', '#d77bff']
+
+/** 3–4 graczy: zwarta tabela — wiersz na gracza, kolumny na typy wrogów */
+function StatisticsManyPlayers({
+  view,
+  scores,
+  hiScore,
+}: {
+  view: StatisticsView
+  scores: number[]
+  hiScore: string
+}) {
+  const COLS = [7, 8.5, 10, 11.5]
+  return (
+    <g className="statistics-scene">
+      <rect fill="#000000" width={SCREEN_WIDTH} height={SCREEN_HEIGHT} />
+      <PixelText content="HI-SCORE" x={2 * B} y={1.5 * B} fill="#e44437" />
+      <PixelText
+        content={hiScore}
+        x={11 * B - hiScore.length * 0.5 * B}
+        y={1.5 * B}
+        fill="#feac4e"
+      />
+      <PixelText content={`STAGE  ${view.stageName}`} x={5 * B} y={3 * B} fill="#ffffff" />
+      {TANK_LEVELS.map((level, j) => (
+        <TankSvg key={level} x={COLS[j] * B} y={4.6 * B} side="bot" level={level} color="silver" />
+      ))}
+      <PixelText content="SUMA" x={13 * B} y={5 * B} fill="#ffffff" />
+      {view.counts.map((counts, i) => {
+        const y = (7 + i * 1.8) * B
+        const cell = (v: number) => (v < 0 ? '' : String(v))
+        return (
+          <g key={i}>
+            <PixelText
+              content={view.autopilot[i] ? `${i + 1}CPU` : `${i + 1}P`}
+              x={0.5 * B}
+              y={y}
+              fill={PLAYER_FILL[i] ?? '#ffffff'}
+            />
+            <PixelText
+              content={String(scores[i] ?? 0).padStart(6)}
+              x={2.5 * B}
+              y={y}
+              fill="#feac4e"
+            />
+            {TANK_LEVELS.map((level, j) => (
+              <PixelText
+                key={level}
+                content={cell(counts[level]).padStart(2)}
+                x={(COLS[j] + 0.1) * B}
+                y={y}
+                fill="#ffffff"
+              />
+            ))}
+            <PixelText
+              content={view.showTotal ? String(total(counts)).padStart(3) : ''}
+              x={13 * B}
+              y={y}
+              fill="#ffffff"
+            />
+          </g>
+        )
+      })}
+    </g>
+  )
 }
 
 function total(counts: Record<TankLevel, number>): number {

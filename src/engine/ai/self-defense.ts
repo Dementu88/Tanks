@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, BULLET_SIZE, FIELD_SIZE, TANK_SIZE } from '../constants'
+import { BLOCK_SIZE, BULLET_SIZE, FIELD_SIZE, FIELD_WIDTH, TANK_SIZE } from '../constants'
 import type Bullet from '../entities/Bullet'
 import type Tank from '../entities/Tank'
 import type TerrainMap from '../map/TerrainMap'
@@ -15,7 +15,7 @@ import type { Direction, Input, Point } from '../types'
 import { bulletLimit, moveSpeed } from '../values'
 import type { AIContext } from './controller'
 import { BULLET_OFFSET, openLane } from './lane'
-import { N, spotToTankPos } from './spots'
+import { N, NR, spotToTankPos } from './spots'
 
 /** 来弹这么久以内会打中才处理 */
 const THREAT_HORIZON = 600
@@ -124,11 +124,11 @@ export function stepsIntoBullet(tank: Tank, ctx: AIContext): boolean {
 
 /** 每个 spot 暴露在 bot 炮口射线里的代价，按 bot 剩余血量算：armor 要挨 4 发，最不该站到它前面 */
 export function exposureCosts(ctx: AIContext): Float64Array {
-  const costs = new Float64Array(N * N)
+  const costs = new Float64Array(N * NR)
   for (const bot of ctx.tanks) {
     const lane = bot.side === 'bot' ? aimLane(ctx, bot, AIM_RANGE) : null
     if (lane == null) continue
-    for (let t = 0; t < N * N; t += 1) {
+    for (let t = 0; t < N * NR; t += 1) {
       if (testCollide(lane, tankRectAt(spotToTankPos(t)), -EPS)) costs[t] += EXPOSURE_COST * bot.hp
     }
   }
@@ -173,7 +173,7 @@ function canShift(tank: Tank, ctx: AIContext, pos: Point, cross: 'x' | 'y', amou
   if (
     swept.x < 0 ||
     swept.y < 0 ||
-    swept.x + swept.width > FIELD_SIZE ||
+    swept.x + swept.width > FIELD_WIDTH ||
     swept.y + swept.height > FIELD_SIZE
   ) {
     return false

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>Pad — makieta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --red: #ff2a2a;
+    --red-mid: #b01010;
+    --red-dim: #4a0606;
+    --red-faint: #1e0303;
+    --glow: drop-shadow(0 0 4px rgba(255, 42, 42, 0.85)) drop-shadow(0 0 12px rgba(255, 30, 30, 0.35));
+    --font: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: #000; color: var(--red);
+    font-family: var(--font); overflow: hidden;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+
+  /* pad zawsze poziomy: w pionie obracamy całość o 90° (JS ustawia wymiary) */
+  #pad {
+    position: fixed; top: 0; left: 0;
+    display: flex; flex-direction: column;
+    background:
+      radial-gradient(circle, rgba(255, 40, 40, 0.22) 1px, transparent 1.6px) 0 0 / 28px 28px,
+      radial-gradient(ellipse at 50% 60%, #120000 0%, #000 70%);
+  }
+
+  /* ---------- pasek u góry ---------- */
+  .top {
+    flex: none; height: 54px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+    border-bottom: 1px solid var(--red-dim);
+    background: linear-gradient(#0a0000, #000);
+  }
+  .player { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; letter-spacing: 0.18em; }
+  .player svg { width: 22px; height: 22px; filter: var(--glow); }
+  .spacer { flex: 1; }
+  .hud-btn {
+    --cut: 8px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 36px; padding: 0 16px;
+    font: 700 12px var(--font); letter-spacing: 0.2em; color: var(--red);
+    background: var(--red-faint);
+    border: 1px solid var(--red-mid);
+    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+    cursor: pointer;
+  }
+  .hud-btn:active, .hud-btn.on { background: var(--red-dim); color: #fff; text-shadow: 0 0 6px var(--red); }
+  .hud-btn.icon { width: 40px; padding: 0; }
+  .hud-btn svg { width: 16px; height: 16px; }
+  .hud-btn.start { background: var(--red-mid); color: #fff; border-color: var(--red); padding: 0 26px; box-shadow: 0 0 14px rgba(255, 30, 30, 0.5); }
+  .stage { display: flex; align-items: center; gap: 6px; }
+  .stage-label { min-width: 118px; text-align: center; font-size: 12px; letter-spacing: 0.16em; }
+  .stage-label b { font-size: 16px; color: #fff; text-shadow: 0 0 8px var(--red); }
+
+  /* ---------- pole sterowania ---------- */
+  .body {
+    flex: 1; min-height: 0; position: relative;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
+  }
+  .left-group { display: flex; align-items: flex-end; gap: 4px; }
+  .ctrl { position: relative; touch-action: none; }
+  .ctrl svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .deco { filter: var(--glow); }
+  .spin-slow { animation: spin 60s linear infinite; transform-origin: 50% 50%; transform-box: view-box; }
+  .spin-rev { animation: spin 38s linear infinite reverse; transform-origin: 50% 50%; transform-box: view-box; }
+  .spin-fast { animation: spin 14s linear infinite; transform-origin: 50% 50%; transform-box: view-box; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .label {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 0.32em; color: var(--red-mid); white-space: nowrap;
+  }
+  .label.below { bottom: -18px; }
+
+  .quad { fill: rgba(255, 30, 30, 0.0); transition: fill 80ms; }
+  .quad.on { fill: rgba(255, 30, 30, 0.16); }
+  .arrow { fill: var(--red-mid); transition: fill 80ms; }
+  .arrow.on { fill: #fff; filter: var(--glow); }
+  .knob { transition: transform 40ms; }
+  .ctrl.active .knob-ring { stroke: #fff; }
+
+  .fire-core { fill: var(--red-faint); stroke: var(--red); stroke-width: 1.2; transition: fill 60ms; }
+  .ctrl.active .fire-core { fill: #5a0606; }
+  .fire-pulse { fill: none; stroke: var(--red); stroke-width: 1.5; opacity: 0; transform-origin: 50% 50%; transform-box: view-box; }
+  .ctrl.active .fire-pulse { animation: pulse 420ms ease-out infinite; }
+  @keyframes pulse { from { opacity: 0.9; transform: scale(0.55); } to { opacity: 0; transform: scale(1.02); } }
+  .fire-text { font: 700 9px var(--font); letter-spacing: 0.3em; fill: var(--red); }
+  .ctrl.active .fire-text { fill: #fff; }
+
+  /* podgląd, co pad wysłał — tylko w makiecie */
+  .readout {
+    position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+    font-size: 11px; letter-spacing: 0.25em; color: var(--red-mid); text-align: center;
+  }
+  .readout b { display: block; margin-top: 4px; font-size: 15px; color: #fff; text-shadow: 0 0 8px var(--red); min-height: 1.2em; }
+</style>
+</head>
+<body>
+<div id="pad">
+  <div class="top">
+    <div class="player">
+      <svg viewBox="0 0 16 16"><rect x="7" y="1" width="2" height="6" fill="#ff2a2a"/><rect x="4" y="5" width="8" height="9" fill="none" stroke="#ff2a2a" stroke-width="1.4"/><rect x="1.5" y="3.5" width="2" height="11" fill="#ff2a2a" opacity=".6"/><rect x="12.5" y="3.5" width="2" height="11" fill="#ff2a2a" opacity=".6"/></svg>
+      GRACZ 1
+    </div>
+    <div class="spacer"></div>
+    <div class="stage">
+      <button class="hud-btn icon" id="prev" aria-label="Poprzednia plansza"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5"/></svg></button>
+      <div class="stage-label">PLANSZA <b id="stageNo">01</b></div>
+      <button class="hud-btn icon" id="next" aria-label="Następna plansza"><svg viewBox="0 0 24 24"><path d="m9 4 8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.5"/></svg></button>
+    </div>
+    <button class="hud-btn start" id="start">START</button>
+    <div class="spacer"></div>
+    <button class="hud-btn" id="pause"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" fill="currentColor"/><rect x="14" y="4" width="5" height="16" fill="currentColor"/></svg>PAUZA</button>
+    <button class="hud-btn icon" aria-label="Pełny ekran"><svg viewBox="0 0 24 24"><path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button>
+  </div>
+
+  <div class="body">
+    <div class="left-group">
+      <div class="ctrl" id="move"><span class="label below">JAZDA</span></div>
+      <div class="ctrl" id="turn"><span class="label below">OBRÓT</span></div>
+    </div>
+    <div class="readout">STEROWANIE<b id="readout">—</b></div>
+    <div class="ctrl" id="fire"><span class="label below">OGIEŃ</span></div>
+  </div>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg'
+const DIRS = ['up', 'right', 'down', 'left']
+const NAMES = { up: '▲', right: '▶', down: '▼', left: '◀' }
+
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag)
+  for (const k in attrs) n.setAttribute(k, attrs[k])
+  if (parent) parent.appendChild(n)
+  return n
+}
+function arc(r, a0, a1) {
+  const p = (a) => [50 + r * Math.sin((a * Math.PI) / 180), 50 - r * Math.cos((a * Math.PI) / 180)]
+  const [x0, y0] = p(a0), [x1, y1] = p(a1)
+  return `M${x0} ${y0} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`
+}
+function ticks(g, r, n, len, every, w = 0.6) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI, l = i % every === 0 ? len * 1.8 : len
+    el('line', { x1: 50 + r * Math.sin(a), y1: 50 - r * Math.cos(a), x2: 50 + (r - l) * Math.sin(a), y2: 50 - (r - l) * Math.cos(a), stroke: '#ff2a2a', 'stroke-width': w, opacity: i % every === 0 ? 0.9 : 0.45 }, g)
+  }
+}
+/** wspólna oprawa HUD: pierścienie, łuki i podziałka, które powoli się kręcą */
+function hudFrame(svg, { arcs = true } = {}) {
+  const deco = el('g', { class: 'deco' }, svg)
+  el('circle', { cx: 50, cy: 50, r: 47, fill: 'none', stroke: '#ff2a2a', 'stroke-width': 0.5, opacity: 0.5 }, deco)
+  const slow = el('g', { class: 'spin-slow' }, deco)
+  ticks(slow, 46.5, 72, 1.6, 6)
+  if (arcs) {
+    const rev = el('g', { class: 'spin-rev' }, deco)
+    el('path', { d: arc(51, 20, 110), fill: 'none', stroke: '#ff2a2a', 'stroke-width': 2.2, 'stroke-linecap': 'round' }, rev)
+    el('path', { d: arc(51, 200, 262), fill: 'none', stroke: '#ff2a2a', 'stroke-width': 2.2, 'stroke-linecap': 'round' }, rev)
+    const fast = el('g', { class: 'spin-fast' }, deco)
+    el('path', { d: arc(54.5, 140, 158), fill: 'none', stroke: '#ff2a2a', 'stroke-width': 0.8, opacity: 0.8 }, fast)
+    el('path', { d: arc(54.5, 320, 345), fill: 'none', stroke: '#ff2a2a', 'stroke-width': 0.8, opacity: 0.8 }, fast)
+  }
+  el('circle', { cx: 50, cy: 50, r: 40, fill: 'rgba(30,0,0,0.55)', stroke: '#b01010', 'stroke-width': 0.6 }, svg)
+  return deco
+}
+/** cztery ćwiartki + strzałki: podświetla wybrany kierunek */
+function quadrants(svg, rIn, rOut, arrowR, arrowSize) {
+  const quads = {}, arrows = {}
+  DIRS.forEach((d, i) => {
+    const a0 = i * 90 - 45, a1 = i * 90 + 45
+    const p = (r, a) => [50 + r * Math.sin((a * Math.PI) / 180), 50 - r * Math.cos((a * Math.PI) / 180)]
+    const [ax, ay] = p(rOut, a0), [bx, by] = p(rOut, a1), [cx, cy] = p(rIn, a1), [dx, dy] = p(rIn, a0)
+    quads[d] = el('path', { class: 'quad', d: `M${ax} ${ay} A${rOut} ${rOut} 0 0 1 ${bx} ${by} L${cx} ${cy} A${rIn} ${rIn} 0 0 0 ${dx} ${dy}Z` }, svg)
+    const g = el('g', { transform: `rotate(${i * 90} 50 50)` }, svg)
+    arrows[d] = el('path', { class: 'arrow', d: `M50 ${50 - arrowR - arrowSize} l${arrowSize} ${arrowSize * 1.1} h${-arrowSize * 2}z` }, g)
+  })
+  DIRS.forEach((_, i) => {
+    const a = ((i * 90 + 45) * Math.PI) / 180
+    el('line', { x1: 50 + rIn * Math.sin(a), y1: 50 - rIn * Math.cos(a), x2: 50 + rOut * Math.sin(a), y2: 50 - rOut * Math.cos(a), stroke: '#4a0606', 'stroke-width': 0.6 }, svg)
+  })
+  return (dir) => DIRS.forEach((d) => { quads[d].classList.toggle('on', d === dir); arrows[d].classList.toggle('on', d === dir) })
+}
+
+// ---------- budowa kontrolek ----------
+const move = document.getElementById('move'), turn = document.getElementById('turn'), fire = document.getElementById('fire')
+const svgMove = el('svg', { viewBox: '0 0 100 100' }, move)
+hudFrame(svgMove)
+const showMove = quadrants(svgMove, 14, 40, 31, 4)
+const knob = el('g', { class: 'knob' }, svgMove)
+el('circle', { class: 'knob-ring', cx: 50, cy: 50, r: 13, fill: 'rgba(60,0,0,0.85)', stroke: '#ff2a2a', 'stroke-width': 1.4 }, knob)
+el('circle', { cx: 50, cy: 50, r: 8.5, fill: 'none', stroke: '#b01010', 'stroke-width': 0.6, 'stroke-dasharray': '2 2' }, knob)
+el('path', { d: 'M50 44v12M44 50h12', stroke: '#ff2a2a', 'stroke-width': 0.8 }, knob)
+
+const svgTurn = el('svg', { viewBox: '0 0 100 100' }, turn)
+hudFrame(svgTurn, { arcs: false })
+const showTurn = quadrants(svgTurn, 10, 40, 22, 7)
+const turnIcon = el('g', {}, svgTurn)
+el('path', { d: arc(9, 30, 300), fill: 'none', stroke: '#ff2a2a', 'stroke-width': 1.6 }, turnIcon)
+el('path', { d: 'M54.5 37.5 l5 4 l-6 2z', fill: '#ff2a2a' }, turnIcon)
+
+const svgFire = el('svg', { viewBox: '0 0 100 100' }, fire)
+hudFrame(svgFire)
+el('circle', { class: 'fire-pulse', cx: 50, cy: 50, r: 40 }, svgFire)
+el('circle', { class: 'fire-core', cx: 50, cy: 50, r: 26 }, svgFire)
+const ret = el('g', { class: 'spin-rev' }, svgFire)
+el('circle', { cx: 50, cy: 50, r: 18, fill: 'none', stroke: '#ff2a2a', 'stroke-width': 0.7, 'stroke-dasharray': '6 4' }, ret)
+el('path', { d: 'M50 28v8M50 64v8M28 50h8M64 50h8', stroke: '#ff2a2a', 'stroke-width': 1.4 }, svgFire)
+el('circle', { cx: 50, cy: 50, r: 3, fill: '#ff2a2a' }, svgFire)
+
+// ---------- układ: zawsze poziomo ----------
+const pad = document.getElementById('pad')
+let rotated = false
+function layout() {
+  const w = innerWidth, h = innerHeight
+  rotated = h > w
+  const W = Math.max(w, h), H = Math.min(w, h)
+  Object.assign(pad.style, { width: W + 'px', height: H + 'px', left: rotated ? H + 'px' : '0px', transform: rotated ? 'rotate(90deg)' : 'none', transformOrigin: 'top left' })
+  const big = Math.round(Math.min(H - 54 - 64, W * 0.33, 300))
+  const small = Math.round(big * 0.46)
+  for (const [n, s] of [[move, big], [fire, big], [turn, small]]) { n.style.width = s + 'px'; n.style.height = s + 'px' }
+}
+addEventListener('resize', layout); addEventListener('orientationchange', layout); layout()
+
+// ---------- dotyk (w obróconym układzie przeliczamy osie) ----------
+const readout = document.getElementById('readout')
+const state = { move: null, turn: null, fire: false }
+function render() {
+  const parts = []
+  if (state.move) parts.push('JAZDA ' + NAMES[state.move])
+  if (state.turn) parts.push('OBRÓT ' + NAMES[state.turn])
+  if (state.fire) parts.push('OGIEŃ')
+  readout.textContent = parts.join('  ·  ') || '—'
+}
+function vec(node, e) {
+  const r = node.getBoundingClientRect()
+  const sx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), sy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2)
+  return rotated ? [sy, -sx] : [sx, sy]
+}
+const dirOf = (x, y, dead) => (Math.hypot(x, y) < dead ? null : Math.abs(x) > Math.abs(y) ? (x > 0 ? 'right' : 'left') : y > 0 ? 'down' : 'up')
+function track(node, onMove, onEnd) {
+  let id = null
+  node.addEventListener('pointerdown', (e) => { id = e.pointerId; node.setPointerCapture(id); node.classList.add('active'); onMove(e) })
+  node.addEventListener('pointermove', (e) => { if (e.pointerId === id) onMove(e) })
+  const end = (e) => { if (e.pointerId !== id) return; id = null; node.classList.remove('active'); onEnd() }
+  node.addEventListener('pointerup', end); node.addEventListener('pointercancel', end)
+}
+const buzz = (ms) => { try { navigator.vibrate?.(ms) } catch {} }
+
+track(move, (e) => {
+  let [x, y] = vec(move, e)
+  const d = Math.hypot(x, y), max = 0.55
+  const kx = d > max ? (x / d) * max : x, ky = d > max ? (y / d) * max : y
+  knob.setAttribute('transform', `translate(${kx * 50} ${ky * 50})`)
+  const dir = dirOf(x, y, 0.2)
+  if (dir !== state.move) { state.move = dir; if (dir) buzz(8); showMove(dir); render() }
+}, () => { knob.setAttribute('transform', ''); state.move = null; showMove(null); render() })
+
+track(turn, (e) => {
+  const [x, y] = vec(turn, e)
+  const dir = dirOf(x, y, 0.15) ?? state.turn
+  if (dir !== state.turn) { state.turn = dir; buzz(8); showTurn(dir); render() }
+}, () => { state.turn = null; showTurn(null); render() })
+
+track(fire, () => { if (!state.fire) { state.fire = true; buzz(15); render() } }, () => { state.fire = false; render() })
+
+// ---------- pasek u góry (tylko wygląd) ----------
+let stage = 1
+const stageNo = document.getElementById('stageNo')
+document.getElementById('prev').onclick = () => { stage = stage > 1 ? stage - 1 : 35; stageNo.textContent = String(stage).padStart(2, '0') }
+document.getElementById('next').onclick = () => { stage = stage < 35 ? stage + 1 : 1; stageNo.textContent = String(stage).padStart(2, '0') }
+const pause = document.getElementById('pause')
+pause.onclick = () => pause.classList.toggle('on')
+</script>
+</body>
+</html>

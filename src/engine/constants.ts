@@ -1,3 +1,5 @@
+import gameConfig from '../../config/gra.json'
+import { GAMEPLAY } from './gameplayConfig'
 import type { TankColor, TankLevel } from './types'
 
 /** n 帧对应的毫秒数；原版按 60fps 逐帧计时 */
@@ -7,10 +9,19 @@ export const frame = (n: number): number => (1000 / 60) * n
 export const BLOCK_SIZE = 16
 /** 坦克的大小 */
 export const TANK_SIZE = BLOCK_SIZE
-/** 战场的大小（13 block × 13 block） */
+/** 战场的大小（13 block × 13 block）— wysokość planszy zawsze 13, szerokość zmienna (FIELD_COLS) */
 export const FIELD_BLOCK_SIZE = 13
-/** 战场的大小（208px × 208px） */
+/** wysokość planszy w px (208); szerokość to FIELD_WIDTH */
 export const FIELD_SIZE = BLOCK_SIZE * FIELD_BLOCK_SIZE
+/**
+ * szeroka plansza (losowe dla większej liczby graczy): config/gra.json „szerokaPlansza”
+ * (domyślnie 21 kratek); nieparzysta, żeby orzeł był na środku
+ */
+export const WIDE_FIELD_COLS = ((): number => {
+  const v = Math.round(Number((gameConfig as { szerokaPlansza?: unknown }).szerokaPlansza))
+  const cols = Number.isFinite(v) ? Math.min(31, Math.max(15, v)) : 21
+  return cols % 2 === 1 ? cols : cols + 1
+})()
 /** 子弹的大小 */
 export const BULLET_SIZE = 3
 /** 摧毁 steel 所需的最低子弹 power 值 */
@@ -19,7 +30,6 @@ export const STEEL_POWER = 3
 /** 渲染缩放倍数 */
 export const ZOOM_LEVEL = 2
 /** 屏幕逻辑尺寸（含右侧 HUD 区，16×15 block） */
-export const SCREEN_WIDTH = 16 * BLOCK_SIZE
 export const SCREEN_HEIGHT = 15 * BLOCK_SIZE
 
 /**
@@ -31,6 +41,9 @@ export const TANK_COLOR_SCHEMES: Record<TankColor, { a: string; b: string; c: st
   green: { a: '#B5F7CE', b: '#008C31', c: '#005200' },
   silver: { a: '#FFFFFF', b: '#ADADAD', c: '#00424A' },
   red: { a: '#FFFFFF', b: '#B53121', c: '#5A007B' },
+  // gracze 3 i 4 — w tym samym stylu: jasny / główny / ciemny odcień
+  blue: { a: '#BDE4FF', b: '#2F78E8', c: '#0B2E7A' },
+  purple: { a: '#F4C6FF', b: '#B43AD6', c: '#4E0A63' },
 }
 
 /** 击杀坦克得分 */
@@ -50,28 +63,94 @@ export const ITEM_SIZE_MAP = {
   FOREST: BLOCK_SIZE,
 } as const
 
-/** 各类地形铺满一整行所需的子格数量 */
-export const N_MAP = {
-  BRICK: FIELD_SIZE / ITEM_SIZE_MAP.BRICK, // 52
-  STEEL: FIELD_SIZE / ITEM_SIZE_MAP.STEEL, // 26
-  RIVER: FIELD_SIZE / ITEM_SIZE_MAP.RIVER, // 13
-  SNOW: FIELD_SIZE / ITEM_SIZE_MAP.SNOW, // 13
-  FOREST: FIELD_SIZE / ITEM_SIZE_MAP.FOREST, // 13
-} as const
+type CellCounts = { BRICK: number; STEEL: number; RIVER: number; SNOW: number; FOREST: number }
+
+const cellCounts = (px: number): CellCounts => ({
+  BRICK: px / ITEM_SIZE_MAP.BRICK, // 52
+  STEEL: px / ITEM_SIZE_MAP.STEEL, // 26
+  RIVER: px / ITEM_SIZE_MAP.RIVER, // 13
+  SNOW: px / ITEM_SIZE_MAP.SNOW, // 13
+  FOREST: px / ITEM_SIZE_MAP.FOREST, // 13
+})
+
+/**
+ * Szerokość bieżącej planszy. Zmienia ją tylko setFieldCols (wczytanie planszy, lustro TV);
+ * importy są „żywe”, więc wszyscy widzą aktualną wartość. Na raz gra jest jedna (jeden pokój).
+ */
+export let FIELD_COLS = FIELD_BLOCK_SIZE
+/** szerokość planszy w px */
+export let FIELD_WIDTH = FIELD_SIZE
+/** szerokość ekranu: plansza + ramka + panel HUD po prawej */
+export let SCREEN_WIDTH = FIELD_WIDTH + 3 * BLOCK_SIZE
+/** 各类地形铺满一整行所需的子格数量 (= krok indeksu w tablicach terenu) */
+export let N_MAP: CellCounts = cellCounts(FIELD_WIDTH)
+/** liczba wierszy podkratek (wysokość się nie zmienia) */
+export const N_ROWS: CellCounts = cellCounts(FIELD_SIZE)
+/** siatka punktów AI (co 8 px): kolumny / wiersze */
+export let SPOT_COLS = FIELD_WIDTH / 8
+export const SPOT_ROWS = FIELD_SIZE / 8
 
 export const TANK_LEVELS: TankLevel[] = ['basic', 'fast', 'power', 'armor']
+
+/** ustawia szerokość planszy (w kratkach 16 px) — przed wczytaniem / pokazaniem planszy */
+export function setFieldCols(cols: number): void {
+  const c = Math.max(FIELD_BLOCK_SIZE, Math.round(cols))
+  if (c === FIELD_COLS) return
+  FIELD_COLS = c
+  FIELD_WIDTH = c * BLOCK_SIZE
+  SCREEN_WIDTH = FIELD_WIDTH + 3 * BLOCK_SIZE
+  N_MAP = cellCounts(FIELD_WIDTH)
+  SPOT_COLS = FIELD_WIDTH / 8
+  BOT_SPAWN_X = botSpawnX(c)
+}
+
+/** kolumna orła (środek planszy) */
+export const eagleCol = (cols: number = FIELD_COLS): number => Math.floor(cols / 2)
+
+/**
+ * starty graczy 1–4 dla danej szerokości: 1 i 2 tuż przy orle, 3 i 4 dalej
+ * (na planszy 13 dokładnie jak PLAYER_SPAWN_POS)
+ */
+export function playerSpawns(cols: number = FIELD_COLS): { x: number; y: number }[] {
+  const e = eagleCol(cols)
+  const far = cols > FIELD_BLOCK_SIZE ? 6 : 4
+  return [e - 2, e + 2, e - far, e + far].map((c) => ({ x: c * BLOCK_SIZE, y: 12 * BLOCK_SIZE }))
+}
 
 /** 玩家出生点 */
 export const PLAYER_SPAWN_POS = {
   player1: { x: 4 * BLOCK_SIZE, y: 12 * BLOCK_SIZE },
   player2: { x: 8 * BLOCK_SIZE, y: 12 * BLOCK_SIZE },
+  // gracze 3 i 4: dalej od orła; plansza robi tam miejsce przy starcie (BattleScene)
+  player3: { x: 2 * BLOCK_SIZE, y: 12 * BLOCK_SIZE },
+  player4: { x: 10 * BLOCK_SIZE, y: 12 * BLOCK_SIZE },
 } as const
+
+/** punkty startu graczy po kolei (1–4) */
+export const PLAYER_SPAWNS = [
+  PLAYER_SPAWN_POS.player1,
+  PLAYER_SPAWN_POS.player2,
+  PLAYER_SPAWN_POS.player3,
+  PLAYER_SPAWN_POS.player4,
+] as const
+
+/** kolory graczy po kolei (1–4) */
+export const PLAYER_COLORS: TankColor[] = ['yellow', 'green', 'blue', 'purple']
 
 /** 每累计 10000 分 +1 命 */
 export const LIFE_BONUS_SCORE = 10000
 
 /** bot 出生点（屏幕顶部三处，y 均为 0），按轮流顺序排列：中 → 右 → 左 */
-export const BOT_SPAWN_X = [6 * BLOCK_SIZE, 12 * BLOCK_SIZE, 0] as const
+function botSpawnX(cols: number): readonly number[] {
+  const e = eagleCol(cols)
+  const columns =
+    cols > FIELD_BLOCK_SIZE
+      ? // szeroka: jeszcze dwa wjazdy w ćwiartkach
+        [e, cols - 1, 0, Math.floor(e / 2), cols - 1 - Math.floor(e / 2)]
+      : [e, cols - 1, 0]
+  return columns.map((c) => c * BLOCK_SIZE)
+}
+export let BOT_SPAWN_X: readonly number[] = botSpawnX(FIELD_BLOCK_SIZE)
 
 /** 每关 20 个 bot 中携带道具的下标（从 0 计） */
 export const POWER_UP_BOT_INDICES = [3, 10, 17]
@@ -97,7 +176,8 @@ export const POWER_UP_SCORE = 500
 export const INITIAL_LIVES = 3
 
 /** 玩家复活无敌头盔时长（帧 → ms） */
-export const SPAWN_HELMET_DURATION = frame(135)
+export const SPAWN_HELMET_DURATION = GAMEPLAY.playerSpawnShieldMs
+export const BOT_SPAWN_HELMET_DURATION = GAMEPLAY.enemySpawnShieldMs
 
 /** 玩家托管：每关开战后一直没按键时，可操作满 START 就托管；按过键之后连续空闲 IDLE 托管（ms） */
 export const AUTOPILOT_START = 2000
@@ -120,7 +200,7 @@ export const TIMER_FREEZE_TICK = frame(64)
 export const SNOW_SLIDE_START = 16
 export const SNOW_SLIDE_LOCK = 8
 /** helmet 道具的无敌时长（帧 → ms） */
-export const HELMET_POWERUP_DURATION = frame(630)
+export const HELMET_POWERUP_DURATION = GAMEPLAY.bonusShieldMs
 /** shovel：变钢持续（帧 → ms）、闪烁间隔、闪烁次数 */
 export const SHOVEL_STEEL_DURATION = frame(1076)
 export const SHOVEL_BLINK_INTERVAL = frame(16)

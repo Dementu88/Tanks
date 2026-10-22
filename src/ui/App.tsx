@@ -1,6 +1,12 @@
 import { useLayoutEffect } from 'react'
 import type { RawStageConfig } from '../engine/types'
 import Lobby from '../lan/Lobby'
+import PadScreen, { PadJoin } from '../party/PadScreen'
+import DevScreen from '../party/DevScreen'
+import TestBench from '../party/TestBench'
+import ControlLab from '../party/ControlLab'
+import ControlLabPad from '../party/ControlLabPad'
+import TvScreen from '../party/TvScreen'
 import GameCanvas from './GameCanvas'
 import { GALLERY_TABS, replace, stagePath, useRoute, type Route } from './router'
 import ChooseStage from './screens/ChooseStage'
@@ -82,5 +88,23 @@ function CurrentScreen() {
       return <Options />
     case 'lobby':
       return <Lobby view={route.view} />
+    case 'party-tv':
+      return (
+        <TvScreen code={route.code} mute={route.mute} accessKey={route.accessKey} pc={route.pc} />
+      )
+    case 'party-test':
+      return <TestBench />
+    case 'control-lab':
+      return <ControlLab />
+    case 'control-lab-pad':
+      return <ControlLabPad token={route.token} />
+    case 'party-dev':
+      return <DevScreen />
+    case 'party-pad':
+      return route.code == null ? (
+        <PadJoin />
+      ) : (
+        <PadScreen code={route.code} accessKey={route.accessKey} player={route.player} />
+      )
   }
 }

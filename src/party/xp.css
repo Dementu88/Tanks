@@ -1,0 +1,214 @@
+/* Rozwój drużyny (XP) — w stylu czerwonego HUD-u pada; przyciski z hudTheme.css */
+.xp-panel {
+  color: #f3e6e6;
+  font:
+    13px/1.45 'Segoe UI',
+    system-ui,
+    sans-serif;
+  text-align: left;
+  width: 100%;
+}
+.xp-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  font: 700 15px var(--hud-font, monospace);
+  letter-spacing: 0.22em;
+}
+.xp-heading strong {
+  color: #fff;
+  text-shadow: var(--hud-glow);
+}
+.xp-heading b {
+  color: var(--hud-accent);
+  letter-spacing: 0.1em;
+}
+.xp-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 6px;
+}
+.xp-note {
+  font-size: 12px;
+  margin: 8px 0 14px;
+}
+.xp-traits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.xp-trait {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.xp-trait strong {
+  display: block;
+  font: 700 10px var(--hud-font, monospace);
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+  color: var(--xp-color, #ff8585);
+}
+.xp-trait span {
+  display: block;
+}
+.xp-trait small {
+  font-size: 11px;
+}
+body.party .xp-trait button {
+  width: 100%;
+  padding: 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+/* kolory cech — odcienie czerwieni jak pad */
+body.party .xp-speed {
+  --xp-color: #ffaaaa;
+}
+body.party .xp-fire {
+  --xp-color: #ff5555;
+}
+body.party .xp-armor {
+  --xp-color: #d62b2b;
+}
+body.party .xp-bullet {
+  --xp-color: #ff8a5c;
+}
+body.party .xp-shield {
+  --xp-color: #ffd5d5;
+}
+.xp-level {
+  display: flex !important;
+  gap: 4px;
+  min-width: 50px;
+}
+.xp-level i {
+  display: block;
+  flex: 1;
+  height: 6px;
+  background: #3c2020;
+  transform: skewX(-20deg);
+}
+.xp-level i.on {
+  background: var(--xp-color, #ff2a2a);
+  box-shadow: 0 0 6px var(--xp-color, #ff2a2a);
+}
+.xp-settings {
+  margin-top: 16px;
+}
+.xp-settings summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font: 700 11px var(--hud-font, monospace);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ff8585;
+}
+.xp-settings fieldset {
+  border: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+.xp-settings fieldset:disabled {
+  opacity: 0.5;
+}
+.xp-setting span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+.xp-setting b {
+  color: #fff;
+}
+.xp-setting input {
+  width: 100%;
+}
+.xp-hud {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+  font: 700 13px var(--hud-font, monospace);
+  letter-spacing: 0.1em;
+  z-index: 5;
+}
+.xp-hud-trait {
+  color: #e6caca;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.xp-lobby-button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: var(--hud-font, monospace);
+}
+.xp-modal {
+  position: fixed;
+  inset: 0;
+  background: #000c;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.xp-modal-content {
+  width: min(860px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 20px;
+}
+body.party .xp-close {
+  display: flex;
+  margin: 0 0 12px auto;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.pad-menu-panel {
+  max-height: 92dvh;
+  max-width: 94vw;
+  overflow: auto;
+  box-sizing: border-box;
+  width: min(860px, 94vw);
+  touch-action: pan-y;
+}
+@media (max-width: 600px) {
+  .xp-traits {
+    gap: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  .xp-trait {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .xp-settings fieldset {
+    grid-template-columns: 1fr;
+  }
+  .xp-hud {
+    gap: 10px;
+  }
+  .xp-hud-trait {
+    font-size: 9px;
+  }
+}

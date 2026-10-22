@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, FIELD_SIZE, ITEM_SIZE_MAP, TANK_SIZE } from '../constants'
+import { BLOCK_SIZE, FIELD_SIZE, FIELD_WIDTH, ITEM_SIZE_MAP, TANK_SIZE } from '../constants'
 import type Tank from '../entities/Tank'
 import type TerrainMap from '../map/TerrainMap'
 import { getDirectionInfo, type Rect } from '../physics/geometry'
@@ -96,7 +96,7 @@ function aheadLength(
     const rect = movedTankRect(tank, axis, delta * step * size)
     if (
       rect.x + rect.width <= 0 ||
-      rect.x >= FIELD_SIZE ||
+      rect.x >= FIELD_WIDTH ||
       rect.y + rect.height <= 0 ||
       rect.y >= FIELD_SIZE
     ) {
@@ -131,7 +131,7 @@ function lookAhead(map: TerrainMap, tank: Tank, direction: Direction): BarrierIn
     if (direction === 'up') border = tank.y
     else if (direction === 'down') border = FIELD_SIZE - tank.y - TANK_SIZE
     else if (direction === 'left') border = tank.x
-    else border = FIELD_SIZE - tank.x - TANK_SIZE
+    else border = FIELD_WIDTH - tank.x - TANK_SIZE
     return { type: 'border', length: border }
   } else if (steelLen <= brickLen && steelLen <= riverLen) {
     return { type: 'steel', length: steelLen }

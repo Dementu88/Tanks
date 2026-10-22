@@ -1,0 +1,3 @@
+Grafiki wilczych czolgow odlozone na pozniej (2026-10-17).
+Zeby wrocily do gry: przenies ten katalog z powrotem jako public\grafiki.
+Edytor grafik (edytor_grafik.bat) zapisuje prosto do public\grafiki.

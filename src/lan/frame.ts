@@ -1,5 +1,12 @@
 import type BattleScene from '../engine/BattleScene'
-import { N_MAP, TANK_LEVELS } from '../engine/constants'
+import {
+  FIELD_BLOCK_SIZE,
+  FIELD_COLS,
+  N_MAP,
+  N_ROWS,
+  setFieldCols,
+  TANK_LEVELS,
+} from '../engine/constants'
 import type { FlickerShape } from '../engine/entities/Flicker'
 import TerrainMap from '../engine/map/TerrainMap'
 import type {
@@ -10,6 +17,7 @@ import type {
   TankColor,
   TankSide,
 } from '../engine/types'
+import type { DebugTankInfo } from '../engine/debug'
 import type { StatisticsView } from '../engine/StatisticsAnimation'
 import type {
   BulletView,
@@ -22,10 +30,14 @@ import type {
 import type { BattleView } from '../ui/BattleOverlay'
 
 const SIDES: TankSide[] = ['player', 'bot']
-const COLORS: TankColor[] = ['yellow', 'green', 'silver', 'red']
+// nowe kolory tylko na końcu — indeksy starych muszą zostać takie same
+const COLORS: TankColor[] = ['yellow', 'green', 'silver', 'red', 'blue', 'purple']
 const DIRECTIONS: Direction[] = ['up', 'right', 'down', 'left']
 
-/** [id, side, level, color, direction, x, y, flags, hp, bornAt]；枚举取下标，flags 见 TANK_FLAG */
+/**
+ * [id, side, level, color, direction, x, y, flags, hp, bornAt, rank]；枚举取下标，flags 见 TANK_FLAG；
+ * rank — poziom czołgu gracza 1–5 (0 dla wrogów)
+ */
 export type TankTuple = [
   number,
   number,
@@ -37,6 +49,8 @@ export type TankTuple = [
   number,
   number,
   number,
+  number,
+  number?,
 ]
 export type BulletTuple = [id: number, x: number, y: number]
 export type ExplosionTuple = [id: number, cx: number, cy: number, shape: ExplosionShape]
@@ -54,6 +68,8 @@ export interface MapFrame {
   snows: string
   forests: string
   eagle: [number, number] | null
+  /** szerokość planszy w kratkach; brak = 13 (stare klienty / serwery) */
+  cols?: number
 }
 
 /** 渲染一关画面需要的全部状态；数组都是元组，省掉 JSON 里重复的字段名 */
@@ -82,6 +98,8 @@ export interface FrameMessage {
   /** null 表示离开结算页 */
   statistics?: { view: StatisticsView; scores: number[] } | null
   sounds?: SoundName[]
+  /** tryb developera („pokaż zaawansowane”): trasy i cele AI */
+  debug?: DebugTankInfo[]
 }
 
 /** 坐标保留两位小数：像素对齐渲染用不到更高精度 */
@@ -114,6 +132,11 @@ export class SceneEncoder {
   private sceneId = 0
   private terrainVersion = -1
 
+  /** następna klatka znów niesie całą mapę — dla TV, które dołączyło w trakcie gry */
+  reset(): void {
+    this.scene = null
+  }
+
   encode(scene: BattleScene | null): SceneFrame | null {
     if (scene == null) {
       return null
@@ -140,6 +163,8 @@ export class SceneEncoder {
               (t.withPowerUp ? TANK_FLAG.withPowerUp : 0),
             t.hp,
             Math.round(t.bornAt),
+            t.rank,
+            t.maxHp,
           ],
         ),
       bullets: scene.bullets.map((b) => [b.bulletId, r2(b.x), r2(b.y)]),
@@ -165,17 +190,21 @@ export class SceneEncoder {
         snows: packBits(map.snows),
         forests: packBits(map.forests),
         eagle: map.eagle == null ? null : [map.eagle.x, map.eagle.y],
+        cols: FIELD_COLS,
       }
       this.terrainVersion = map.version
     } else if (map.version !== this.terrainVersion) {
-      frame.terrain = { bricks: packBits(map.bricks), steels: packBits(map.steels) }
+      frame.terrain = {
+        bricks: packBits(map.bricks),
+        steels: packBits(map.steels),
+      }
       this.terrainVersion = map.version
     }
     return frame
   }
 }
 
-const cells = (n: number): boolean[] => new Array<boolean>(n * n).fill(false)
+const cells = (n: number, rows: number): boolean[] => new Array<boolean>(n * rows).fill(false)
 
 /** 客机侧：按收到的 SceneFrame 还原出 Renderer 能直接吃的对象 */
 export class SceneMirror {
@@ -196,14 +225,15 @@ export class SceneMirror {
     }
     if (frame.map != null) {
       const m = frame.map
+      setFieldCols(m.cols ?? FIELD_BLOCK_SIZE)
       this.map = new TerrainMap({
         name: '',
         difficulty: 1,
-        bricks: unpackBits(m.bricks, cells(N_MAP.BRICK)),
-        steels: unpackBits(m.steels, cells(N_MAP.STEEL)),
-        rivers: unpackBits(m.rivers, cells(N_MAP.RIVER)),
-        snows: unpackBits(m.snows, cells(N_MAP.SNOW)),
-        forests: unpackBits(m.forests, cells(N_MAP.FOREST)),
+        bricks: unpackBits(m.bricks, cells(N_MAP.BRICK, N_ROWS.BRICK)),
+        steels: unpackBits(m.steels, cells(N_MAP.STEEL, N_ROWS.STEEL)),
+        rivers: unpackBits(m.rivers, cells(N_MAP.RIVER, N_ROWS.RIVER)),
+        snows: unpackBits(m.snows, cells(N_MAP.SNOW, N_ROWS.SNOW)),
+        forests: unpackBits(m.forests, cells(N_MAP.FOREST, N_ROWS.FOREST)),
         eagle: m.eagle == null ? null : { x: m.eagle[0], y: m.eagle[1] },
         bots: [],
       })
@@ -222,7 +252,7 @@ export class SceneMirror {
     map.eagleBroken = frame.eagleBroken === 1
     this.time = frame.time
     this.tanks = frame.tanks.map(
-      ([tankId, side, level, color, direction, x, y, flags, hp, bornAt]) => ({
+      ([tankId, side, level, color, direction, x, y, flags, hp, bornAt, rank, maxHp]) => ({
         tankId,
         alive: true,
         side: SIDES[side],
@@ -237,7 +267,9 @@ export class SceneMirror {
         helmetDuration: (flags & TANK_FLAG.helmet) !== 0 ? 1 : 0,
         withPowerUp: (flags & TANK_FLAG.withPowerUp) !== 0,
         hp,
+        maxHp: maxHp ?? hp,
         bornAt,
+        rank: rank ?? 0,
       }),
     )
     this.bullets = frame.bullets.map(([bulletId, x, y]) => ({ bulletId, x, y }))
@@ -274,12 +306,15 @@ export class FrameMirror {
   sounds: SoundName[] = []
   /** 收到的帧数，渲染循环据此跳过没有新数据的 rAF */
   frames = 0
+  /** trasy AI z ostatniej klatki; null = podgląd wyłączony */
+  debug: DebugTankInfo[] | null = null
 
   apply(msg: FrameMessage): void {
     this.frames += 1
     this.scene.apply(msg.scene)
     if (msg.view !== undefined) this.view = msg.view
     if (msg.statistics !== undefined) this.statistics = msg.statistics
+    this.debug = msg.debug ?? null
     if (msg.sounds != null) {
       // 页面在后台时 rAF 停了，回来别一口气补放一大串
       this.sounds = [...this.sounds, ...msg.sounds].slice(-8)

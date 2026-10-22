@@ -2,7 +2,7 @@ import { BLOCK_SIZE, ITEM_SIZE_MAP } from '../constants'
 import type TerrainMap from '../map/TerrainMap'
 import { testCollide, type Rect } from '../physics/geometry'
 import { BULLET_OFFSET, BULLET_WIDTH, eagleGuard } from './lane'
-import { dirs, getCol, getRow, N, spotToTankPos } from './spots'
+import { dirs, getCol, getRow, N, NR, spotToTankPos } from './spots'
 
 /**
  * 打掉一层砖（4px 深）折算成走几格：玩家子弹一发正好打掉坦克宽度的一层，
@@ -91,9 +91,9 @@ export function digDistances(
   start: number,
   { layerCost = BRICK_LAYER_COST, avoid, extraCost }: DigOptions = {},
 ): DigGraph {
-  const dist = new Float64Array(N * N).fill(Infinity)
-  const prev = new Int32Array(N * N).fill(-1)
-  const passable = new Int8Array(N * N).fill(-1)
+  const dist = new Float64Array(N * NR).fill(Infinity)
+  const prev = new Int32Array(N * NR).fill(-1)
+  const passable = new Int8Array(N * NR).fill(-1)
   const canStand = (t: number) => {
     if (passable[t] === -1) passable[t] = diggable(map, t) && !avoid?.(t) ? 1 : 0
     return passable[t] === 1

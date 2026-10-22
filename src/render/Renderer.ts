@@ -2,6 +2,7 @@ import { Application, Container, Graphics, Sprite, type RenderTexture } from 'pi
 import {
   BLOCK_SIZE,
   FIELD_SIZE,
+  FIELD_WIDTH,
   frame,
   SCREEN_HEIGHT,
   SCREEN_WIDTH,
@@ -15,9 +16,12 @@ import type PowerUp from '../engine/entities/PowerUp'
 import type ScorePopup from '../engine/entities/ScorePopup'
 import type Tank from '../engine/entities/Tank'
 import type TerrainMap from '../engine/map/TerrainMap'
+import type { DebugTankInfo } from '../engine/debug'
 import type { Direction } from '../engine/types'
 import { bakeForest, bakeRiver, bakeTerrain } from './layers'
 import type SpriteAtlas from './SpriteAtlas'
+import { playerStats } from '../engine/tankStats'
+import { customPlayerTank } from './customSprites'
 import { tankColor } from './tankColor'
 
 /** 履带动画：每 80ms 切换一帧，shape 0/1 循环 */
@@ -36,8 +40,10 @@ export type TankView = Pick<
   | 'alive'
   | 'side'
   | 'level'
+  | 'rank'
   | 'color'
   | 'hp'
+  | 'maxHp'
   | 'withPowerUp'
   | 'bornAt'
   | 'direction'
@@ -55,8 +61,11 @@ export type ScorePopupView = Pick<ScorePopup, 'id' | 'score' | 'x' | 'y' | 'visi
 
 interface TankSpriteEntry {
   sprite: Sprite
+  armor: Graphics
   /** 停止移动时保留最后一帧 shape */
   lastShape: 0 | 1
+  /** to samo dla grafik z plików (dowolna liczba klatek) */
+  lastFrame: number
 }
 
 const DIRECTION_ROTATION: Record<Direction, number> = {
@@ -74,6 +83,8 @@ const DIRECTION_ROTATION: Record<Direction, number> = {
 export default class Renderer {
   private readonly root = new Container()
   private readonly battlefield = new Container()
+  /** tryb developera: trasy i cele AI nad wszystkim */
+  private readonly debugLayer = new Graphics()
   private readonly riverLayer = new Container()
   private readonly terrainLayer = new Container()
   private readonly bulletLayer = new Container()
@@ -93,6 +104,9 @@ export default class Renderer {
   private readonly flickerSprites = new Map<number, Sprite>()
   private readonly scoreSprites = new Map<number, Sprite>()
 
+  private readonly screenBg = new Graphics()
+  private readonly fieldBg = new Graphics()
+
   private terrainSprite: Sprite | null = null
   private riverSprite: Sprite | null = null
   private riverTextures: RenderTexture[] = []
@@ -109,12 +123,10 @@ export default class Renderer {
     this.battlefield.position.set(BLOCK_SIZE, BLOCK_SIZE)
 
     // 屏幕灰色底（NES 风格的边框 + HUD 面板背景），HUD 由 React SVG overlay 绘制
-    const screenBg = new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill(0x757575)
-    // 战场黑色背景（13×13 block）
-    const bg = new Graphics().rect(0, 0, FIELD_SIZE, FIELD_SIZE).fill(0x000000)
-    this.battlefield.addChild(bg, ...this.layers)
+    this.drawBackground()
+    this.battlefield.addChild(this.fieldBg, ...this.layers, this.debugLayer)
 
-    this.root.addChild(screenBg, this.battlefield)
+    this.root.addChild(this.screenBg, this.battlefield)
     this.app.stage.addChild(this.root)
   }
 
@@ -133,8 +145,16 @@ export default class Renderer {
     ]
   }
 
+  /** tło ekranu i planszy — szerokość zależy od planszy (13 albo szeroka) */
+  private drawBackground(): void {
+    this.screenBg.clear().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill(0x757575)
+    // 战场黑色背景（13 block wysokości × FIELD_COLS）
+    this.fieldBg.clear().rect(0, 0, FIELD_WIDTH, FIELD_SIZE).fill(0x000000)
+  }
+
   /** 装载一关：烘焙地形 + 老鹰 + 森林。会清空上一关的内容。 */
   mountStage(map: TerrainMap): void {
+    this.drawBackground()
     this.destroyBakedTextures()
     for (const layer of this.layers) {
       layer.removeChildren().forEach((c) => c.destroy())
@@ -221,22 +241,61 @@ export default class Renderer {
         const sprite = new Sprite()
         sprite.anchor.set(0.5)
         this.tankLayer.addChild(sprite)
-        entry = { sprite, lastShape: 0 }
+        const armor = new Graphics()
+        this.tankLayer.addChild(armor)
+        entry = { sprite, armor, lastShape: 0, lastFrame: 0 }
         this.tankSprites.set(tank.tankId, entry)
       }
-      const shape: 0 | 1 = tank.moving
-        ? ((Math.floor((time % TIRE_SHAPE_PERIOD) / 80) === 0 ? 0 : 1) as 0 | 1)
-        : entry.lastShape
-      entry.lastShape = shape
-      const color = tankColor(tank, time)
-      entry.sprite.texture = this.atlas.get(`tank/${tank.side}/${tank.level}/${color}/${shape}`)
+      const custom = tank.side === 'player' ? customPlayerTank(tank.rank) : null
+      if (custom != null) {
+        // grafika z pliku (64 px na kratkę) — skalujemy do 16 jednostek gry
+        const frame = tank.moving
+          ? Math.floor((time / 1000) * custom.fps) % custom.frames.length
+          : Math.min(entry.lastFrame, custom.frames.length - 1)
+        entry.lastFrame = frame
+        const texture = custom.frames[frame]
+        entry.sprite.texture = texture
+        entry.sprite.scale.set((TANK_SIZE / texture.width) * playerStats(tank.rank).spriteScale)
+        const color = tankColor(tank, time)
+        entry.sprite.tint =
+          tank.hp <= 1
+            ? 0xffffff
+            : color === 'green'
+              ? 0x72e58b
+              : color === 'yellow'
+                ? 0xffda72
+                : 0xc8dcf4
+      } else {
+        const shape: 0 | 1 = tank.moving
+          ? ((Math.floor((time % TIRE_SHAPE_PERIOD) / 80) === 0 ? 0 : 1) as 0 | 1)
+          : entry.lastShape
+        entry.lastShape = shape
+        const color = tankColor(tank, time)
+        entry.sprite.texture = this.atlas.get(`tank/${tank.side}/${tank.level}/${color}/${shape}`)
+        entry.sprite.scale.set(1)
+        entry.sprite.tint = 0xffffff
+      }
       entry.sprite.rotation = DIRECTION_ROTATION[tank.direction]
       entry.sprite.position.set(tank.x + TANK_SIZE / 2, tank.y + TANK_SIZE / 2)
       entry.sprite.visible = tank.visible
+      entry.armor.clear()
+      if (tank.side === 'player' && tank.maxHp > 1 && tank.visible) {
+        const identity = {
+          yellow: 0xffda48,
+          green: 0x5ee778,
+          blue: 0x579aff,
+          purple: 0xc88aff,
+          silver: 0xdddddd,
+          red: 0xff5555,
+        }[tank.color]
+        entry.armor.rect(tank.x, tank.y - 3, TANK_SIZE, 2).fill(0x27313a)
+        entry.armor.rect(tank.x, tank.y - 3, (TANK_SIZE * tank.hp) / tank.maxHp, 2).fill(identity)
+      }
     }
     for (const [id, entry] of this.tankSprites) {
       if (!seen.has(id)) {
         entry.sprite.destroy()
+        entry.armor.destroy()
         this.tankSprites.delete(id)
       }
     }
@@ -356,6 +415,37 @@ export default class Renderer {
   }
 
   /** 显式渲染一帧 */
+  /**
+   * Tryb developera („pokaż zaawansowane”): linia trasy, kropki punktów, cel (kółko), kierunek
+   * celowania (krótka kreska). Kolory: wróg wędruje = pomarańczowy, wróg na orła = fiolet,
+   * trasa przez cegły = przerywana, autopilot gracza = niebieski.
+   */
+  syncDebug(info: DebugTankInfo[] | null): void {
+    const g = this.debugLayer
+    g.clear()
+    if (info == null) return
+    for (const t of info) {
+      const color = t.side === 'player' ? 0x3fa9ff : t.goal === 'eagle' ? 0xd04bff : 0xff9a1f
+      // obrys czołgu sterowanego przez AI
+      g.rect(t.x - 8, t.y - 8, 16, 16).stroke({ width: 0.75, color, alpha: 0.9 })
+      if (t.path.length > 0) {
+        g.moveTo(t.x, t.y)
+        for (const [x, y] of t.path) g.lineTo(x, y)
+        g.stroke({ width: t.dig ? 1.5 : 1, color, alpha: t.dig ? 0.55 : 0.85 })
+        for (const [x, y] of t.path.slice(0, -1)) g.circle(x, y, 1.2).fill({ color, alpha: 0.9 })
+        const [tx, ty] = t.path[t.path.length - 1]
+        g.circle(tx, ty, 4).stroke({ width: 1, color })
+        g.circle(tx, ty, 1.8).fill({ color })
+      }
+      if (t.aim != null) {
+        const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[t.aim]
+        g.moveTo(t.x, t.y)
+          .lineTo(t.x + d[0] * 20, t.y + d[1] * 20)
+          .stroke({ width: 1.5, color: 0xff2a2a })
+      }
+    }
+  }
+
   render(): void {
     this.app.renderer.render(this.app.stage)
   }

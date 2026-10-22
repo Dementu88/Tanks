@@ -2,7 +2,8 @@ import { useId } from 'react'
 import {
   BLOCK_SIZE as B,
   FIELD_SIZE,
-  PLAYER_SPAWN_POS,
+  FIELD_WIDTH,
+  playerSpawns,
   SCREEN_HEIGHT,
   SCREEN_WIDTH,
   ZOOM_LEVEL,
@@ -61,7 +62,7 @@ export default function BattleOverlay({
       }}
     >
       {view.hudVisible && (
-        <g transform={`translate(${FIELD_SIZE + 1.5 * B}, ${1.5 * B})`}>
+        <g transform={`translate(${FIELD_WIDTH + 1.5 * B}, ${1.5 * B})`}>
           <HudContent
             remainingBots={view.remainingBots}
             lives={view.lives}
@@ -71,13 +72,16 @@ export default function BattleOverlay({
       )}
       {view.hudVisible &&
         view.canBorrowLife.map(
-          (can, i) => can && <BorrowLifeHint key={i} spawnPos={SPAWN_POS_BY_PLAYER[i]} />,
+          (can, i) => can && <BorrowLifeHint key={i} spawnPos={playerSpawns()[i]} />,
         )}
-      {view.gameoverProgress != null && <GameoverText progress={view.gameoverProgress} />}
       {view.curtain > 0 && <StageEnterCurtain t={view.curtain} stageName={view.stageName} />}
-      {pauseMenu != null && <PauseMenu {...pauseMenu} />}
-      {pauseNotice != null && <PauseNotice text={pauseNotice} />}
-      {awaitingKey && <PressAnyKey />}
+      {/* napisy na środku planszy — na szerokiej przesunięte do jej środka */}
+      <g transform={`translate(${(FIELD_WIDTH - FIELD_SIZE) / 2}, 0)`}>
+        {view.gameoverProgress != null && <GameoverText progress={view.gameoverProgress} />}
+        {pauseMenu != null && <PauseMenu {...pauseMenu} />}
+        {pauseNotice != null && <PauseNotice text={pauseNotice} />}
+        {awaitingKey && <PressAnyKey />}
+      </g>
     </svg>
   )
 }
@@ -94,11 +98,15 @@ export function HudContent({
 }) {
   return (
     <g className="hud">
-      <BotCountIndicator count={remainingBots} />
+      {/* miejsce w HUD jest na 20 ikonek (2 × 10); przy 3–4 graczach wrogów bywa więcej */}
+      <BotCountIndicator count={Math.min(20, remainingBots)} />
       <g transform={`translate(0, ${6 * B})`}>
         {lives.map((n, i) => (
           <g key={i} transform={`translate(0, ${i * B})`}>
-            <PlayerLabel numeral={i === 0 ? 'Ⅰ' : 'Ⅱ'} autopilot={autopilot[i]} />
+            <PlayerLabel
+              numeral={['Ⅰ', 'Ⅱ', '3', '4'][i] ?? String(i + 1)}
+              autopilot={autopilot[i]}
+            />
             <PlayerTankThumbnail x={0} y={0.5 * B} />
             <PixelText x={0.5 * B} y={0.5 * B} content={String(Math.max(0, n))} fill="#000000" />
           </g>
@@ -138,17 +146,23 @@ function GameoverText({ progress }: { progress: number }) {
 function StageEnterCurtain({ t, stageName }: { t: number; stageName: string }) {
   const clipId = useId()
   const size = 13 * B
+  const width = FIELD_WIDTH
   return (
     <g transform={`translate(${B}, ${B})`}>
       <defs>
         <clipPath id={clipId}>
-          <rect x={0} y={0} width={size} height={(size / 2) * t} />
-          <rect x={0} y={size * (1 - t / 2)} width={size} height={(size / 2) * t} />
+          <rect x={0} y={0} width={width} height={(size / 2) * t} />
+          <rect x={0} y={size * (1 - t / 2)} width={width} height={(size / 2) * t} />
         </clipPath>
       </defs>
       <g clipPath={`url(#${clipId})`}>
-        <rect width={size} height={size} fill="#757575" />
-        <PixelText x={5 * B} y={6 * B} content={`stage  ${stageName}`} fill="#000000" />
+        <rect width={width} height={size} fill="#757575" />
+        <PixelText
+          x={5 * B + (width - size) / 2}
+          y={6 * B}
+          content={`stage  ${stageName}`}
+          fill="#000000"
+        />
       </g>
     </g>
   )
@@ -159,8 +173,6 @@ function PressAnyKey() {
   const visible = useBlink()
   return visible ? <PixelText x={120 - 13 * 4} y={8 * B} content="press any key" /> : null
 }
-
-const SPAWN_POS_BY_PLAYER = [PLAYER_SPAWN_POS.player1, PLAYER_SPAWN_POS.player2]
 
 /** 没命的玩家出生点上闪烁 PRESS FIRE，提示可以向队友借命 */
 function BorrowLifeHint({ spawnPos }: { spawnPos: { x: number; y: number } }) {

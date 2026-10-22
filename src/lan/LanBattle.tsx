@@ -32,7 +32,7 @@ import type { Role } from './protocol'
 type StatisticsPayload = { view: StatisticsView; scores: number[] }
 
 /** BattleScene 和客机的 SceneMirror 都满足这个形状 */
-interface RenderableScene {
+export interface RenderableScene {
   map: TerrainMap | null
   time: number
   tanks: TankView[]
@@ -44,7 +44,7 @@ interface RenderableScene {
 }
 
 /** 同 GameCanvas 的 onRender：换关时重新装载地图，再同步各层 */
-function createSceneSync(renderer: Renderer): (scene: RenderableScene | null) => void {
+export function createSceneSync(renderer: Renderer): (scene: RenderableScene | null) => void {
   let mounted: TerrainMap | null = null
   return (scene) => {
     const map = scene?.map
@@ -65,7 +65,11 @@ function createSceneSync(renderer: Renderer): (scene: RenderableScene | null) =>
   }
 }
 
-async function createApp(): Promise<Application> {
+/**
+ * resolution > 1 rysuje w wyższej rozdzielczości przy tym samym rozmiarze CSS — potrzebne,
+ * żeby szczegóły grafik z plików (64 px na kratkę) były widać na dużym TV
+ */
+export async function createApp(resolution = 1): Promise<Application> {
   const app = new Application()
   await app.init({
     width: SCREEN_WIDTH * ZOOM_LEVEL,
@@ -73,6 +77,8 @@ async function createApp(): Promise<Application> {
     background: 0x000000,
     autoStart: false,
     roundPixels: true,
+    resolution,
+    autoDensity: resolution !== 1,
   })
   return app
 }

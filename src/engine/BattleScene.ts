@@ -1,12 +1,12 @@
 import {
   BLOCK_SIZE,
   BOT_FLICKER_DURATION,
+  BOT_SPAWN_HELMET_DURATION,
   BOT_SPAWN_X,
+  FIELD_COLS,
   botSpawnInterval,
   HELMET_POWERUP_DURATION,
   LIFE_BONUS_SCORE,
-  MAX_BOT_ON_FIELD,
-  POWER_UP_BOT_INDICES,
   POWER_UP_SCORE,
   SCORE_POPUP_DURATION,
   SHOVEL_BLINK_INTERVAL,
@@ -18,7 +18,13 @@ import {
   TIMER_FREEZE_TICK,
   TIMER_FREEZE_TICKS,
 } from './constants'
+import { carriesPowerUp, maxBotsOnField, spawnIntervalFactor } from './difficulty'
 import Tank from './entities/Tank'
+import type { DebugTankInfo } from './debug'
+import { NO_EVENTS, type GameEvent } from './events'
+import { MAX_RANK, RANK_LEVEL, rankOfLevel } from './tankStats'
+import { NO_SESSION_BONUSES } from './sessionXp'
+import { GAMEPLAY } from './gameplayConfig'
 import type Bullet from './entities/Bullet'
 import Explosion, { BIG_EXPLOSION_DURATION } from './entities/Explosion'
 import Flicker, { FLICKER_DURATION } from './entities/Flicker'
@@ -49,13 +55,6 @@ import {
 import { emptyCounts } from './StatisticsAnimation'
 import type InputManager from '../input/InputManager'
 import type { AudioPort, TankLevel } from './types'
-
-const TANK_UPGRADE: Record<TankLevel, TankLevel> = {
-  basic: 'fast',
-  fast: 'power',
-  power: 'armor',
-  armor: 'armor',
-}
 
 type ShovelPhase = 'none' | 'steel' | 'blink'
 
@@ -147,8 +146,13 @@ export default class BattleScene {
     }))
     this.killInfo = players.map(() => emptyCounts(0))
     const multi = players.length > 1
-    this.maxBotsOnField = multi ? MAX_BOT_ON_FIELD.multi : MAX_BOT_ON_FIELD.single
-    this.botSpawnInterval = botSpawnInterval(stageNumber, multi)
+    this.maxBotsOnField = maxBotsOnField(players.length, options.difficulty)
+    // gracze 3 i 4 startują z boku — tam musi być wolna kratka (oryginalne plansze tego nie przewidują)
+    for (const state of players.slice(2)) {
+      map.clearBlock(state.spawnPos.x, state.spawnPos.y)
+    }
+    this.botSpawnInterval =
+      botSpawnInterval(stageNumber, multi) * spawnIntervalFactor(options.difficulty)
     this.stageNumber = stageNumber
   }
 
@@ -165,6 +169,7 @@ export default class BattleScene {
       const tank = slot.tank ?? slot.flicker?.tank
       if (tank != null && tank.alive) {
         slot.state.reservedTankLevel = tank.level
+        slot.state.reservedRank = tank.rank
         tank.alive = false
       }
       slot.tank = null
@@ -210,6 +215,11 @@ export default class BattleScene {
     return this.spotsCache
   }
 
+  /** zdarzenia tylko informują świat zewnętrzny; nic w silniku od nich nie zależy */
+  private emit(event: GameEvent): void {
+    ;(this.options.events ?? NO_EVENTS).emit(event)
+  }
+
   private aliveBotCount(): number {
     let n = 0
     for (const t of this.tanks) {
@@ -221,10 +231,13 @@ export default class BattleScene {
   // region 出生
   private spawnPlayer(slot: PlayerSlot): void {
     const { state } = slot
-    let level: TankLevel = 'basic'
+    let rank = GAMEPLAY.playerStartRank
+    let level: TankLevel = RANK_LEVEL[rank - 1]
     if (state.reservedTankLevel != null) {
       level = state.reservedTankLevel
+      rank = state.reservedRank ?? rankOfLevel(level)
       state.reservedTankLevel = null
+      state.reservedRank = null
     } else if (state.lives > 0) {
       state.lives -= 1
     } else {
@@ -233,6 +246,7 @@ export default class BattleScene {
     const tank = new Tank({
       side: 'player',
       level,
+      rank,
       color: state.color,
       direction: 'up',
       x: state.spawnPos.x,
@@ -240,6 +254,9 @@ export default class BattleScene {
       hp: 1,
       helmetDuration: SPAWN_HELMET_DURATION,
     })
+    this.applySessionBonuses(tank)
+    // XP „Tarcza”: dłuższa ochrona tylko przy odrodzeniu, nie przy zakupie
+    tank.helmetDuration += (this.options.sessionBonuses?.() ?? NO_SESSION_BONUSES).extraShieldMs
     slot.flicker = new Flicker(tank)
     slot.respawnTimer = 0
     slot.brain = null
@@ -247,6 +264,9 @@ export default class BattleScene {
 
   /** 出生计时只在真正出生时重置：满员时停在 0，一有空位就出生 */
   private updateBotSpawn(delta: number): void {
+    if (this.devNoBots) {
+      return
+    }
     if (this.botSpawnTimer > 0) {
       this.botSpawnTimer = Math.max(0, this.botSpawnTimer - delta)
       return
@@ -264,7 +284,7 @@ export default class BattleScene {
     const x = BOT_SPAWN_X[this.nextBotSpawnIndex]
     this.nextBotSpawnIndex = (this.nextBotSpawnIndex + 1) % BOT_SPAWN_X.length
     const level = this.remainingBots.shift()!
-    const withPowerUp = POWER_UP_BOT_INDICES.includes(this.spawnedBotCount)
+    const withPowerUp = carriesPowerUp(this.spawnedBotCount, this.options.difficulty)
     if (withPowerUp) {
       // 新的携带道具 bot 出场时，清除场上已有道具
       this.powerUps.length = 0
@@ -278,6 +298,7 @@ export default class BattleScene {
       x,
       y: 0,
       hp: level === 'armor' ? 4 : 1,
+      helmetDuration: BOT_SPAWN_HELMET_DURATION,
       withPowerUp,
     })
     this.botFlickers.push(new Flicker(tank, FLICKER_DURATION / BOT_FLICKER_DURATION))
@@ -293,6 +314,12 @@ export default class BattleScene {
         this.placeTank(flicker.tank)
         slot.tank = flicker.tank
         slot.flicker = null
+        this.emit({
+          type: 'player_spawned',
+          time: this.time,
+          playerId: slot.state.id,
+          level: flicker.tank.level,
+        })
       }
     }
     for (const flicker of this.botFlickers) {
@@ -320,6 +347,9 @@ export default class BattleScene {
     const bonus = Math.floor(state.score / LIFE_BONUS_SCORE) - Math.floor(before / LIFE_BONUS_SCORE)
     if (bonus > 0) {
       state.lives += bonus
+      for (let i = 0; i < bonus; i += 1) {
+        this.emit({ type: 'life_gained', time: this.time, playerId: state.id, reason: 'score' })
+      }
     }
   }
 
@@ -343,6 +373,14 @@ export default class BattleScene {
       this.countKill(shooter, bot.level)
       this.addScore(shooter, score)
     }
+    this.emit({
+      type: 'bot_killed',
+      time: this.time,
+      playerId: shooter?.state.id ?? null,
+      level: bot.level,
+      score: shooter != null ? score : 0,
+      by: 'bullet',
+    })
     this.dyingBotTimers.push(BIG_EXPLOSION_DURATION + SCORE_POPUP_DURATION)
   }
 
@@ -355,7 +393,7 @@ export default class BattleScene {
       positions.length > 0
         ? positions[Math.floor(random() * positions.length)]
         : {
-            x: (Math.floor(random() * 25) / 2) * BLOCK_SIZE,
+            x: (Math.floor(random() * (2 * FIELD_COLS - 1)) / 2) * BLOCK_SIZE,
             y: (Math.floor(random() * 25) / 2) * BLOCK_SIZE,
           }
     this.powerUps.push(new PowerUp(name, pos.x, pos.y))
@@ -387,18 +425,50 @@ export default class BattleScene {
           this.spawnPowerUp()
         }
         target.hp -= 1
+        const shooter = this.playerSlotOfTank(hit.bullet.tankId)
+        if (shooter != null) {
+          this.emit({
+            type: 'bot_hit',
+            time: this.time,
+            playerId: shooter.state.id,
+            level: target.level,
+            killed: target.hp <= 0,
+          })
+        }
         if (target.hp <= 0) {
           this.killBot(target, hit.bullet.tankId)
         }
       } else {
         // player → player（队友）：冻结 + 闪烁
         target.frozenTimeout = FREEZE_DURATION
+        const shooter = this.playerSlotOfTank(hit.bullet.tankId)
+        const victim = this.players.find((p) => p.tank === target)
+        if (shooter != null && victim != null) {
+          this.emit({
+            type: 'teammate_hit',
+            time: this.time,
+            playerId: shooter.state.id,
+            targetId: victim.state.id,
+          })
+        }
       }
     } else {
       // bot → player（无头盔已在 bullet 系统过滤）
       const slot = this.players.find((p) => p.tank === target)
       if (slot != null) {
+        target.hp -= 1
+        if (target.hp > 0) {
+          this.audio.play('bullet_hit_1')
+          return
+        }
         this.killPlayer(slot)
+        const killer = this.tanks.find((t) => t.tankId === hit.bullet.tankId)
+        this.emit({
+          type: 'player_died',
+          time: this.time,
+          playerId: slot.state.id,
+          killerLevel: killer?.level ?? null,
+        })
       }
     }
   }
@@ -430,7 +500,12 @@ export default class BattleScene {
     }
     this.decayTimers(tank, delta)
     const fire = controller.fire(tank, ctx, delta)
+    const bulletsBefore = this.bullets.length
     fireTank(tank, fire, delta, this.bullets, this.audio)
+    if (tank.side === 'player' && this.bullets.length > bulletsBefore) {
+      const slot = this.players.find((p) => p.tank === tank)
+      if (slot != null) this.emit({ type: 'shot', time: this.time, playerId: slot.state.id })
+    }
     this.intents.set(tank.tankId, { move, fire })
   }
 
@@ -445,6 +520,7 @@ export default class BattleScene {
 
   /** 推进一个定步 */
   step(delta: number, input: InputManager): void {
+    this.refreshSessionBonuses()
     // Input/AI → Movement → Fire
     const ctx = this.aiContext()
     for (const slot of this.players) {
@@ -460,6 +536,7 @@ export default class BattleScene {
         continue
       }
       if (botsFrozen) {
+        this.decayTimers(tank, delta)
         tank.moving = false
         this.intents.delete(tank.tankId)
         continue
@@ -479,8 +556,12 @@ export default class BattleScene {
     // Bullet（含命中结算）→ Explosion
     const hits: BulletTankHit[] = []
     const { bullets, map, explosions, audio, tanks } = this
+    const eagleWasBroken = map.eagleBroken
     for (const tankId of updateBullets(bullets, map, explosions, audio, delta, tanks, hits)) {
       this.brains.get(tankId)?.onBaseHit()
+    }
+    if (!eagleWasBroken && map.eagleBroken) {
+      this.emit({ type: 'eagle_destroyed', time: this.time })
     }
     for (const hit of hits) {
       this.applyHit(hit)
@@ -565,7 +646,14 @@ export default class BattleScene {
           this.audio.play('powerup_pick')
           this.addScore(slot, POWER_UP_SCORE)
           this.scorePopups.push(new ScorePopup(POWER_UP_SCORE, p.x, p.y))
+          this.emit({
+            type: 'powerup_picked',
+            time: this.time,
+            playerId: slot.state.id,
+            name: p.name,
+          })
           this.applyPowerUp(p.name, slot, tank)
+          this.reviveOutPlayers()
           break
         }
       }
@@ -576,12 +664,22 @@ export default class BattleScene {
     switch (name) {
       case 'tank':
         slot.state.lives += 1
+        this.emit({
+          type: 'life_gained',
+          time: this.time,
+          playerId: slot.state.id,
+          reason: 'powerup',
+        })
         break
       case 'star':
-        if (tank.level === 'armor') {
-          this.addScore(slot, STAR_ARMOR_SCORE)
-        } else {
-          tank.level = TANK_UPGRADE[tank.level]
+        for (const player of this.players) {
+          const ally = player.tank
+          if (ally == null || !ally.alive) continue
+          if (ally.rank >= MAX_RANK) {
+            this.addScore(player, STAR_ARMOR_SCORE)
+          } else {
+            this.setRank(ally, ally.rank + 1)
+          }
         }
         break
       case 'grenade':
@@ -590,6 +688,14 @@ export default class BattleScene {
           if (t.side === 'bot' && t.alive) {
             t.alive = false
             this.countKill(slot, t.level)
+            this.emit({
+              type: 'bot_killed',
+              time: this.time,
+              playerId: slot.state.id,
+              level: t.level,
+              score: 0,
+              by: 'grenade',
+            })
             this.explosions.push(new Explosion({ x: t.x + 8, y: t.y + 8 }, 'big'))
             this.dyingBotTimers.push(BIG_EXPLOSION_DURATION)
           }
@@ -607,6 +713,119 @@ export default class BattleScene {
         break
     }
   }
+
+  private reviveOutPlayers(): void {
+    for (const slot of this.players) {
+      if (slot.tank != null || slot.flicker != null || slot.state.lives > 0) continue
+      slot.state.lives = 1
+      this.emit({
+        type: 'life_gained',
+        time: this.time,
+        playerId: slot.state.id,
+        reason: 'powerup',
+      })
+      // Trwająca eksplozja kończy się normalnie; przyznane życie zużyje odrodzenie.
+      if (slot.respawnTimer <= 0) this.spawnPlayer(slot)
+    }
+  }
+
+  private setRank(tank: Tank, rank: number): void {
+    tank.rank = Math.min(MAX_RANK, Math.max(1, rank))
+    tank.level = RANK_LEVEL[tank.rank - 1]
+  }
+
+  private applySessionBonuses(tank: Tank): void {
+    const bonus = this.options.sessionBonuses?.() ?? NO_SESSION_BONUSES
+    tank.xpSpeedMultiplier = bonus.speedMultiplier
+    tank.xpFireRateMultiplier = bonus.fireRateMultiplier
+    tank.xpBulletSpeedMultiplier = bonus.bulletSpeedMultiplier
+    // Zakup dodaje nowe płyty pancerza; kolejne klatki nie naprawiają uszkodzeń.
+    tank.hp = Math.max(1, tank.hp + bonus.extraHp - tank.xpExtraHp)
+    tank.xpExtraHp = bonus.extraHp
+    tank.maxHp = 1 + bonus.extraHp
+  }
+
+  refreshSessionBonuses(): void {
+    for (const slot of this.players) {
+      const tank = slot.tank ?? slot.flicker?.tank
+      if (tank?.alive) this.applySessionBonuses(tank)
+    }
+  }
+
+  // region tryb developera (wywołuje tylko serwer z włączonym trybem dev)
+  devSetRank(playerIndex: number, rank: number): void {
+    const tank = this.players[playerIndex]?.tank
+    if (tank != null) this.setRank(tank, rank)
+  }
+
+  devKillAllBots(): void {
+    for (const t of this.tanks) {
+      if (t.side === 'bot' && t.alive) {
+        t.alive = false
+        this.explosions.push(new Explosion({ x: t.x + 8, y: t.y + 8 }, 'big'))
+        this.dyingBotTimers.push(BIG_EXPLOSION_DURATION)
+      }
+    }
+  }
+
+  devSetInvincible(playerIndex: number, on: boolean): void {
+    const tank = this.players[playerIndex]?.tank
+    if (tank != null) tank.helmetDuration = on ? 24 * 60 * 60 * 1000 : 0
+  }
+
+  devAddLife(playerIndex: number): void {
+    const slot = this.players[playerIndex]
+    if (slot != null) slot.state.lives += 1
+  }
+
+  devFreezeBots(on: boolean): void {
+    this.botFreezeTicks = on ? Number.MAX_SAFE_INTEGER : 0
+  }
+
+  /** wrogowie przestają się pojawiać (plansza się wtedy nie kończy) — do spokojnych testów */
+  private devNoBots = false
+
+  devSetBotsEnabled(on: boolean): void {
+    this.devNoBots = !on
+  }
+
+  /** bonus prosto pod czołgiem gracza — zbiera go w następnym kroku jak normalnie */
+  devSpawnPowerUp(playerIndex: number, name: PowerUp['name']): void {
+    const tank = this.players[playerIndex]?.tank
+    if (tank != null) this.powerUps.push(new PowerUp(name, tank.x, tank.y))
+  }
+
+  devKillPlayer(playerIndex: number): void {
+    const slot = this.players[playerIndex]
+    if (slot?.tank != null) this.killPlayer(slot)
+  }
+
+  /** tryb developera: dokąd jadą czołgi sterowane przez AI */
+  devDebug(): DebugTankInfo[] {
+    const result: DebugTankInfo[] = []
+    for (const tank of this.tanks) {
+      if (!tank.alive) continue
+      const brain =
+        tank.side === 'bot'
+          ? this.brains.get(tank.tankId)
+          : this.players.find((p) => p.tank === tank)?.brain
+      if (brain == null || !('debug' in brain)) continue
+      const info = (brain as BotBrain | TeammateBrain).debug()
+      result.push({ tankId: tank.tankId, side: tank.side, x: tank.x + 8, y: tank.y + 8, ...info })
+    }
+    return result
+  }
+
+  /** stan graczy dla panelu developera */
+  devPlayers(): { rank: number; lives: number; alive: boolean; invincible: boolean }[] {
+    return this.players.map((slot) => ({
+      rank: slot.tank?.rank ?? slot.flicker?.tank.rank ?? 0,
+      lives: slot.state.lives,
+      alive: slot.tank != null,
+      invincible: (slot.tank?.helmetDuration ?? 0) > 60 * 60 * 1000,
+    }))
+  }
+  // endregion
 
   private shovelExcludes(): Rect[] {
     const excludes: Rect[] = []
@@ -695,6 +914,12 @@ export default class BattleScene {
       if (lender != null && input.firePressed(slot.state.control)) {
         lender.state.lives -= 1
         slot.state.lives += 1
+        this.emit({
+          type: 'life_gained',
+          time: this.time,
+          playerId: slot.state.id,
+          reason: 'borrowed',
+        })
         this.spawnPlayer(slot)
       }
     }

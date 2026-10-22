@@ -1,6 +1,6 @@
 import type { TankIntent } from './ai/controller'
 import type { LoseReason, StageStatus } from './BattleScene'
-import { ITEM_SIZE_MAP, N_MAP } from './constants'
+import { ITEM_SIZE_MAP, N_MAP, N_ROWS } from './constants'
 import type Bullet from './entities/Bullet'
 import type PowerUp from './entities/PowerUp'
 import type Tank from './entities/Tank'
@@ -93,7 +93,7 @@ export function terrainSnapshot(map: TerrainMap): string[] {
   const n = N_MAP.BRICK
   const size = ITEM_SIZE_MAP.BRICK
   const rows: string[] = []
-  for (let row = 0; row < n; row += 1) {
+  for (let row = 0; row < N_ROWS.BRICK; row += 1) {
     let line = ''
     for (let col = 0; col < n; col += 1) {
       const px = col * size
