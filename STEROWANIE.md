@@ -70,3 +70,19 @@ Logi pozostają w pamięci do odświeżenia strony; „Pobierz JSON” zapisuje 
 silnika. Nie jest to pomiar opóźnienia Wi-Fi, serwera party ani telewizora.
 
 Testy: `pnpm exec vitest run test/stick.test.ts test/touchJoystick.test.ts test/controlLab.test.ts test/controlLabRelay.test.ts`.
+
+## Siatka i obrysy (tylko poligon)
+
+Panel **Ustawienia → Siatka i obrysy**. Kratka (16 px) dzieli się na komórki — domyślnie 8 × 8,
+czyli komórka 2 px. Komórka to najmniejszy krok ruchu, wyrównania skrętu i niszczenia.
+
+- **Fizyka siatki** — wyłączona: poligon działa jak gra. Włączona: działają suwaki poniżej.
+- **Podział kratki** 1–16, **Ruch co komórkę** (czołg staje tylko na liniach siatki, średnia
+  prędkość bez zmian), **Wyrównanie skrętu** w komórkach, **Obszar dmg** — szerokość w poprzek
+  lotu i głębokość w ścianę (8 komórek po 2 px = szerokość czołgu).
+- **Obrysy**: siatka (białe komórki, czerwone kratki), kolizja czołgu (zielony 16 × 16)
+  i miejsce zarezerwowane do skrętu (żółty), linie wyrównania skrętu (różowe), obszar
+  niszczenia lecącego pocisku i ślad trafienia (pomarańczowy), ściany: cegły, stal, woda.
+
+Ustawienia zapamiętuje przeglądarka (`party-control-lab-grid-v1`). Gra z rodziną ich nie używa —
+jak się sprawdzą, przeniesiemy je do gry.

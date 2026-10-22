@@ -23,6 +23,34 @@ export function bulletMBR(bullet: Bullet): Rect {
   return getMBR(bullet.lastRect(), bullet.rect())
 }
 
+/**
+ * Obszar niszczenia pocisku ustawiany w poligonie (px): `width` w poprzek lotu (wyśrodkowany na
+ * pocisku), `depth` w głąb przeszkody od miejsca trafienia. Brak = jak w oryginale.
+ */
+export interface BulletDamage {
+  width: number
+  depth: number
+}
+
+/** prostokąt, który pocisk wytnie przy trafieniu (dla zadanego obszaru niszczenia) */
+export function damageRect(bullet: Bullet, damage: BulletDamage): Rect {
+  const r = bullet.rect()
+  const cx = r.x + r.width / 2
+  const cy = r.y + r.height / 2
+  const w = damage.width
+  const d = damage.depth
+  switch (bullet.direction) {
+    case 'up':
+      return { x: cx - w / 2, y: r.y - d, width: w, height: d + r.height }
+    case 'down':
+      return { x: cx - w / 2, y: r.y, width: w, height: d + r.height }
+    case 'left':
+      return { x: r.x - d, y: cy - w / 2, width: d + r.width, height: w }
+    case 'right':
+      return { x: r.x, y: cy - w / 2, width: d + r.width, height: w }
+  }
+}
+
 const BULLET_EXPLOSION_SPREAD = 4
 const BULLET_EXPLOSION_THRESHOLD = 0.01
 
@@ -30,7 +58,8 @@ const BULLET_EXPLOSION_THRESHOLD = 0.01
  * 子弹爆炸时影响的区域：沿垂直于飞行方向扩展 4px，便于一次打掉一段墙。
  * 注意应在子弹「爆炸落点」坐标上调用。
  */
-export function spreadBullet(bullet: Bullet): Rect {
+export function spreadBullet(bullet: Bullet, damage?: BulletDamage | null): Rect {
+  if (damage != null) return damageRect(bullet, damage)
   const r = bullet.rect()
   const v = BULLET_EXPLOSION_SPREAD + BULLET_EXPLOSION_THRESHOLD
   if (bullet.direction === 'up' || bullet.direction === 'down') {

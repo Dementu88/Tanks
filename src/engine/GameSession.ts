@@ -1,5 +1,6 @@
 import BattleScene from './BattleScene'
 import type { SessionBonuses } from './sessionXp'
+import type { BulletDamage } from './physics/bullet-collision'
 import { AUTOPILOT_IDLE, AUTOPILOT_START, frame, INITIAL_LIVES } from './constants'
 import TerrainMap from './map/TerrainMap'
 import { scaleBots, startLives } from './difficulty'
@@ -57,6 +58,8 @@ export type PlayerConfig = Pick<PlayerState, 'control' | 'color' | 'spawnPos'> &
 /** 开局时确定、整局不变的选项；GameSession 原样传给每一关的 BattleScene */
 export interface SessionOptions {
   sessionBonuses?: () => SessionBonuses
+  /** poligon: własny obszar niszczenia pocisku (px); brak / null = jak w oryginale */
+  bulletDamage?: () => BulletDamage | null
   /** Options 页的托管开关；false 时不计空闲、不托管 */
   autopilot: boolean
   /** 引擎内所有随机决策的来源；测试传 seededRandom 以便复现 */

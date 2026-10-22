@@ -29,6 +29,7 @@ import {
   type LabProfile,
 } from './labProfile'
 import { useLabHost } from './useLabHost'
+import { LabGridPanel, LabOverlayPainter, useLabGrid } from './LabGrid'
 
 const LIMIT = 2000
 const NAMES = { up: 'góra', down: 'dół', left: 'lewo', right: 'prawo' }
@@ -102,6 +103,11 @@ export default function ControlLab() {
   const [preview, setPreview] = useState(initial.preview)
   const previewRef = useRef(preview)
   previewRef.current = preview
+  const labGrid = useLabGrid()
+  const gridRef = useRef(labGrid.grid)
+  gridRef.current = labGrid.grid
+  const overlayRef = useRef(labGrid.overlay)
+  overlayRef.current = labGrid.overlay
   const [horizontal, setHorizontal] = useState(false)
   const layout = usePadLayout()
   const rotated = horizontal && layout.rotated
@@ -200,6 +206,11 @@ export default function ControlLab() {
   }, [inputFrames])
 
   useEffect(() => {
+    simulation.current?.setGrid(labGrid.grid)
+    log('siatka', 'Ustawienia siatki i obszaru niszczenia', labGrid.grid)
+  }, [labGrid.grid])
+
+  useEffect(() => {
     stopRef.current('Zmiana poziomu / XP — STOP')
     simulation.current?.setPreview(preview)
     log('poziomy', 'Podgląd czołgu i premii XP', preview)
@@ -286,6 +297,7 @@ export default function ControlLab() {
     sim.setTurnSnap(turnSnapRef.current)
     sim.setInputFrames(inputFramesRef.current)
     sim.setPreview(previewRef.current)
+    sim.setGrid(gridRef.current)
     const start = async () => {
       await loadCustomSprites()
       if (cancelled) return
@@ -298,6 +310,7 @@ export default function ControlLab() {
       container.current!.appendChild(instance.canvas)
       renderer = new Renderer(instance, sharedAtlas())
       const sync = createSceneSync(renderer)
+      const painter = new LabOverlayPainter(renderer.overlay)
       let last = performance.now()
       let accumulator = 0
       let lastUi = 0
@@ -343,6 +356,7 @@ export default function ControlLab() {
           accumulator -= STEP_MS
         }
         sync(sim.scene)
+        painter.draw(sim, overlayRef.current)
         if (now - lastUi >= 100) {
           lastUi = now
           setSnapshot({
@@ -716,6 +730,7 @@ export default function ControlLab() {
               <button onClick={() => setSettings({ ...ORIGINAL_STICK })}>Obecny pad</button>
               <button onClick={() => setSettings({ ...STABLE_STICK })}>Stabilniejszy</button>
             </div>
+            <LabGridPanel lab={labGrid} />
             <details className="lab-preview" open>
               <summary>Poziom czołgu i XP — podgląd</summary>
               {(

@@ -497,3 +497,27 @@ body.control-lab-body {
   width: var(--phone-fire);
   height: var(--phone-fire);
 }
+
+/* panel „Siatka i obrysy” */
+.lab-grid-panel .lab-presets {
+  flex-wrap: wrap;
+}
+.lab-legend {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px 12px;
+  font-size: 12px;
+}
+.lab-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lab-legend i {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}

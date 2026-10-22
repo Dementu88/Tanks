@@ -10,6 +10,7 @@ import {
   explosionPosFromRects,
   getBulletCollision,
   spreadBullet,
+  type BulletDamage,
 } from '../physics/bullet-collision'
 import { getDirectionInfo, testCollide, type Rect } from '../physics/geometry'
 import type { AudioPort, Point } from '../types'
@@ -72,6 +73,8 @@ export function updateBullets(
   delta: number,
   tanks: Tank[],
   hits: BulletTankHit[],
+  /** obszar niszczenia z poligonu; null = jak w oryginale */
+  damage: BulletDamage | null = null,
 ): number[] {
   if (bullets.length === 0) {
     return []
@@ -219,7 +222,7 @@ export function updateBullets(
     explosions.push(new Explosion({ x: b.x + 2, y: b.y + 2 }, 'small'))
 
     // 破坏地形（基于落点的 spread 范围）
-    const spread = spreadBullet(b)
+    const spread = spreadBullet(b, damage)
     const bricks = map.brickIndicesIn(spread)
     const hitsGuard =
       guard != null && bricks.some((t) => testCollide(guard, map.brickRectAt(t), -0.01))

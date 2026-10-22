@@ -557,7 +557,17 @@ export default class BattleScene {
     const hits: BulletTankHit[] = []
     const { bullets, map, explosions, audio, tanks } = this
     const eagleWasBroken = map.eagleBroken
-    for (const tankId of updateBullets(bullets, map, explosions, audio, delta, tanks, hits)) {
+    const damage = this.options.bulletDamage?.() ?? null
+    for (const tankId of updateBullets(
+      bullets,
+      map,
+      explosions,
+      audio,
+      delta,
+      tanks,
+      hits,
+      damage,
+    )) {
       this.brains.get(tankId)?.onBaseHit()
     }
     if (!eagleWasBroken && map.eagleBroken) {

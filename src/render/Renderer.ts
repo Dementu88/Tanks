@@ -85,6 +85,8 @@ export default class Renderer {
   private readonly battlefield = new Container()
   /** tryb developera: trasy i cele AI nad wszystkim */
   private readonly debugLayer = new Graphics()
+  /** obrysy poligonu (siatka, kolizje, obszar niszczenia) — rysuje je poligon, gra jej nie używa */
+  readonly overlay = new Container()
   private readonly riverLayer = new Container()
   private readonly terrainLayer = new Container()
   private readonly bulletLayer = new Container()
@@ -124,7 +126,7 @@ export default class Renderer {
 
     // 屏幕灰色底（NES 风格的边框 + HUD 面板背景），HUD 由 React SVG overlay 绘制
     this.drawBackground()
-    this.battlefield.addChild(this.fieldBg, ...this.layers, this.debugLayer)
+    this.battlefield.addChild(this.fieldBg, ...this.layers, this.debugLayer, this.overlay)
 
     this.root.addChild(this.screenBg, this.battlefield)
     this.app.stage.addChild(this.root)
