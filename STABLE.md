@@ -51,7 +51,7 @@ odbywa się po jego zwykłym efekcie.
 
 Poligon ma dwa niezależne suwaki: „Czułość (siatka skrętu)” i „Filtr wejścia
 (klatki)”, 0–12 kroków silnika. Oba zapisuje przycisk Zapisz. Zatrzymanie i ogień
-omijają filtr. Skrypt test_sterowania.bat wykrywa istniejący poligon na 5174,
+omijają filtr. Skrypt poligon.bat wykrywa istniejący poligon na 5174,
 podaje adres i otwiera stronę zamiast uruchamiać drugi serwer.
 
 Podniesienie dowolnego bonusu (czołg, gwiazdka, granat, zegar, tarcza, łopata)

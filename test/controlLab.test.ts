@@ -199,7 +199,9 @@ describe('lokalny poligon sterowania', () => {
     expect(shots).toBe(1)
   })
   it('ma osobny adres', () => {
+    expect(parseHash('#/poligon')).toEqual({ screen: 'control-lab' })
     expect(parseHash('#/sterowanie')).toEqual({ screen: 'control-lab' })
+    expect(parseHash('#/poligon-pad/abc')).toEqual({ screen: 'control-lab-pad', token: 'abc' })
     expect(parseHash('#/test')).toEqual({ screen: 'party-test' })
     expect(parseHash('#/sterowanie-pad/abc')).toEqual({ screen: 'control-lab-pad', token: 'abc' })
   })

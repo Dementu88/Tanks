@@ -105,8 +105,10 @@ export function parseHash(hash: string): Route {
     }
     case 'test':
       return { screen: 'party-test' }
-    case 'sterowanie':
+    case 'poligon':
+    case 'sterowanie': // stara nazwa — stare zakładki dalej działają
       return { screen: 'control-lab' }
+    case 'poligon-pad':
     case 'sterowanie-pad':
       return { screen: 'control-lab-pad', token: a ?? '' }
     case 'dev':

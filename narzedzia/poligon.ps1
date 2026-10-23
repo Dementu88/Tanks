@@ -2,7 +2,7 @@ param([switch]$BezOtwierania)
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$url = 'http://localhost:5174/battle-city/#/sterowanie'
+$url = 'http://localhost:5174/battle-city/#/poligon'
 $vitePath = Join-Path $projectRoot 'node_modules\vite\bin\vite.js'
 
 function Open-Poligon {
@@ -36,7 +36,7 @@ function Use-ExistingPoligon {
     if (-not $ready -and -not $ourServer) {
         throw "Port 5174 zajmuje inny program (PID: $($listeners.OwningProcess -join ', ')). Nie uruchamiam drugiego serwera."
     }
-    Write-Host 'Poligon sterowania juz dziala na porcie 5174.' -ForegroundColor Green
+    Write-Host 'Poligon juz dziala na porcie 5174.' -ForegroundColor Green
     if (-not $ready) {
         Write-Warning 'Proces poligonu dziala, ale strona jeszcze nie odpowiada. Jesli sie nie zaladuje, odswiez ja za chwile.'
     }

@@ -1,8 +1,8 @@
-# Lokalny poligon sterowania
+# Poligon
 
-Uruchom `test_sterowania.bat`. Skrypt uruchamia Vite na porcie 5174 i otwiera
-`http://localhost:5174/battle-city/#/sterowanie`.
-Na telefonie w tej samej sieci możesz otworzyć `http://IP-KOMPUTERA:5174/battle-city/#/sterowanie`
+Uruchom `poligon.bat`. Skrypt uruchamia Vite na porcie 5174 i otwiera
+`http://localhost:5174/battle-city/#/poligon`.
+Na telefonie w tej samej sieci możesz otworzyć `http://IP-KOMPUTERA:5174/battle-city/#/poligon`
 do samodzielnego testu lub zeskanować QR panelu PC, aby używać telefonu wyłącznie jako pada.
 Adresy sieciowe pokazuje Vite. Jeśli port 5174 jest już zajęty przez ten poligon,
 wystarczy ponownie otworzyć link. Zamknięcie procesu Vite kończy udostępnianie strony.
@@ -10,7 +10,7 @@ wystarczy ponownie otworzyć link. Zamknięcie procesu Vite kończy udostępnian
 Poligon działa w przeglądarce telefonu lub komputera. Serwer dostarcza pliki strony;
 ruch, kolizje i strzały liczy lokalnie ten sam silnik co w grze. Nie łączy się z pokojem
 party. Nie ma wrogów, autopilota ani przechodzenia do następnej planszy. Poligon jest
-wyciszony. Po zbudowaniu zwykłej wersji gry dostępny jest także pod `#/sterowanie`.
+wyciszony. Po zbudowaniu zwykłej wersji gry dostępny jest także pod `#/poligon`.
 Połączenie PC–telefon działa na Vite oraz lokalnym serwerze party bez `PARTY_KEY`.
 Na serwerze z kluczem funkcja sterowania poligonem i zapisu profilu nie jest udostępniana.
 
@@ -26,8 +26,9 @@ Na serwerze z kluczem funkcja sterowania poligonem i zapisu profilu nie jest udo
 5. Kliknij „Zapisz”, aby zachować profil w `config/sterowanie.json` na komputerze.
    „Wczytaj zapisane” przywraca zapisane wartości na panelu i telefonie.
 
-Zapis obejmuje progi, czułość, stabilizację, wibracje, pływający środek oraz rozmiary
-joysticka i przycisku ognia. Zmiany suwaków nie nadpisują najlepszego profilu automatycznie.
+Stare suwaki sterowania (progi gałki, czułość, filtr wejścia, rozmiary przycisków) zniknęły
+z panelu — poligon używa ostatnio zapisanego profilu. Strojenie robimy teraz w sekcji
+„Siatka i obrysy”. Zmiany nie nadpisują zapisanego profilu automatycznie.
 Bez włączonego połączenia telefonu przycisk zapisuje profil tylko w przeglądarce.
 Zapis dotyczy poligonu; nie zmienia jeszcze ustawień zwykłej rozgrywki party.
 
@@ -41,12 +42,8 @@ zeskanować nowy kod QR. Pozostaw kartę z labiryntem widoczną na PC.
 - Przycisk ognia można trzymać drugim palcem. Na PC działa mysz oraz WASD/strzałki,
   Shift do obrotu w miejscu i spacja do ognia.
 - „Ustawienia / logi” otwiera panel na małym ekranie; na dużym panel jest stale widoczny.
-- „Obecny pad” odtwarza domyślne progi sterowania. „Stabilniejszy” dodaje margines
-  zmiany osi i oddzielny próg zatrzymania, zmniejsza strefę obrotu i zwiększa czułość.
-- Suwaki zmieniają martwą strefę, próg jazdy, stabilizację kierunku, margines
-  zatrzymania, czułość, wibracje oraz rozmiar przycisków. Wibracje zależą od obsługi
-  przez telefon i przeglądarkę. Rozmiary ogranicza dostępne miejsce na ekranie.
-- Opcja środka pod dotknięciem pozwala rozpoczynać gest w dowolnym miejscu pada.
+- Pod planszą linijka „Siatka …” mówi, co działa teraz: krok ruchu, linie skrętu
+  i wymiary obszaru dmg. Pomarańczowy prostokąt przed lufą pokazuje, co wytnie strzał.
 - Labirynt zawiera pełne bloki, pionowe i poziome połówki, stal i cegły do rozbijania.
 - „Poziomo” w nagłówku wymusza poziomy układ również w teście na jednym urządzeniu.
 - Wyłącz labirynt, aby otrzymać pusty plac. Zmiana tej opcji i „Reset planszy”

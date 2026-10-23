@@ -13,13 +13,7 @@ import { ControlLabSimulation } from './ControlLabSimulation'
 import { FireButton, enterLandscapeFullscreen, usePadLayout } from './PadScreen'
 import TouchJoystick, { type StickSample } from './TouchJoystick'
 import { IDLE_INPUT, sameInput, type PadInput } from './controls'
-import {
-  IDLE_STICK,
-  ORIGINAL_STICK,
-  STABLE_STICK,
-  type StickSettings,
-  type StickState,
-} from './stick'
+import { IDLE_STICK, type StickState } from './stick'
 import { useBodyClass } from './shared'
 import './controlLab.css'
 import {
@@ -29,34 +23,12 @@ import {
   type LabProfile,
 } from './labProfile'
 import { useLabHost } from './useLabHost'
-import { LabGridPanel, LabOverlayPainter, useLabGrid } from './LabGrid'
+import { gridSummary, LabGridPanel, LabOverlayPainter, useLabGrid } from './LabGrid'
 
 const LIMIT = 2000
 const NAMES = { up: 'góra', down: 'dół', left: 'lewo', right: 'prawo' }
 const mode = (input: StickState) =>
   input.direction == null ? 'STOP' : input.turnOnly ? 'OBRÓT' : 'JAZDA'
-const SLIDERS: {
-  key: Exclude<keyof StickSettings, 'floating'>
-  label: string
-  min: number
-  max: number
-  step: number
-  unit: string
-}[] = [
-  { key: 'deadZone', label: 'Martwa strefa', min: 0.02, max: 0.24, step: 0.01, unit: '%' },
-  { key: 'turnZone', label: 'Próg rozpoczęcia jazdy', min: 0.25, max: 0.75, step: 0.01, unit: '%' },
-  {
-    key: 'directionMargin',
-    label: 'Stabilizacja kierunku',
-    min: 0,
-    max: 0.5,
-    step: 0.01,
-    unit: '%',
-  },
-  { key: 'modeMargin', label: 'Margines zatrzymania', min: 0, max: 0.15, step: 0.01, unit: '%' },
-  { key: 'sensitivity', label: 'Czułość wychylenia', min: 0.5, max: 2.5, step: 0.05, unit: '×' },
-  { key: 'vibration', label: 'Wibracja', min: 0, max: 30, step: 1, unit: 'ms' },
-]
 
 interface LogEntry {
   ms: number
@@ -454,7 +426,7 @@ export default function ControlLab() {
       : location.hostname)
   const phoneURL =
     phoneHost && host.token
-      ? `${location.protocol}//${phoneHost}${location.port ? ':' + location.port : ''}${location.pathname}#/sterowanie-pad/${host.token}`
+      ? `${location.protocol}//${phoneHost}${location.port ? ':' + location.port : ''}${location.pathname}#/poligon-pad/${host.token}`
       : ''
   const qr = useMemo(() => {
     if (!phoneURL) return ''
@@ -504,7 +476,7 @@ export default function ControlLab() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `sterowanie-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+    link.download = `poligon-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
     link.click()
     window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
@@ -530,7 +502,7 @@ export default function ControlLab() {
     >
       <header className="lab-header">
         <div>
-          <strong>POLIGON STEROWANIA</strong>
+          <strong>POLIGON</strong>
           <small>
             Labirynt · zero wrogów ·{' '}
             {host.padConnected ? 'steruje telefon przez Wi-Fi' : 'silnik lokalny'}
@@ -602,6 +574,7 @@ export default function ControlLab() {
               LV{preview.rank} · HP {snapshot.hp}/{snapshot.maxHp} · {snapshot.speed.toFixed(1)}{' '}
               px/s · strzał co {Math.round(snapshot.interval)} ms · pociski: {snapshot.bulletLimit}
             </span>
+            <span>{gridSummary(labGrid.grid)}</span>
           </div>
         </div>
         <div className="lab-fire-box" key={`fire-${controlsKey}`}>
@@ -726,10 +699,6 @@ export default function ControlLab() {
               {saveMessage ||
                 'Suwaki działają od razu. Najlepszy profil zachowaj przyciskiem Zapisz.'}
             </p>
-            <div className="lab-presets">
-              <button onClick={() => setSettings({ ...ORIGINAL_STICK })}>Obecny pad</button>
-              <button onClick={() => setSettings({ ...STABLE_STICK })}>Stabilniejszy</button>
-            </div>
             <LabGridPanel lab={labGrid} />
             <details className="lab-preview" open>
               <summary>Poziom czołgu i XP — podgląd</summary>
@@ -794,120 +763,6 @@ export default function ControlLab() {
                 Po edycji przebuduj grę lub wybierz Aktualizuj serwer.
               </p>
             </details>
-            <label className="lab-slider" htmlFor="lab-turn-snap">
-              <span>
-                Czułość (siatka skrętu)
-                <output>
-                  {turnSnap === 0
-                    ? 'wyłączona'
-                    : `${(turnSnap / 16).toLocaleString('pl-PL')} ${turnSnap === 16 ? 'kratka' : 'kratki'} · ${turnSnap} px`}
-                </output>
-              </span>
-              <input
-                id="lab-turn-snap"
-                type="range"
-                min="0"
-                max="32"
-                step="4"
-                value={turnSnap}
-                onChange={(e) => setTurnSnap(Number(e.target.value))}
-              />
-            </label>
-            <p>
-              1 kratka = pełny blok 16 × 16 px i rozmiar czołgu. Standardowy skręt: ½ kratki (8 px).
-              Suwak wyrównuje pozycję przy skręcie o 90°; jazda pozostaje płynna. Ściana blokuje
-              wyrównanie. Działa tylko w poligonie.
-            </p>
-            <label className="lab-slider" htmlFor="lab-input-frames">
-              <span>
-                Filtr wejścia (klatki)
-                <output>
-                  {inputFrames === 0
-                    ? 'wyłączony'
-                    : `${inputFrames} · ≈${Math.round(inputFrames * STEP_MS)} ms`}
-                </output>
-              </span>
-              <input
-                id="lab-input-frames"
-                type="range"
-                min="0"
-                max="12"
-                step="1"
-                value={inputFrames}
-                onChange={(e) => setInputFrames(Number(e.target.value))}
-              />
-            </label>
-            <p>
-              Pomija krótkie zmiany kierunku i trybu obrót/jazda. Nowe wejście czeka N kroków
-              silnika (60/s); w tym czasie czołg stoi. Puszczenie pada i strzał działają od razu. 0
-              wyłącza filtr. Oba suwaki działają także z klawiaturą i zapisują się przez Zapisz.
-            </p>
-            {SLIDERS.map((slider) => (
-              <label key={slider.key} className="lab-slider" htmlFor={`lab-${slider.key}`}>
-                <span>
-                  {slider.label}
-                  <output>
-                    {slider.unit === '%'
-                      ? Math.round(settings[slider.key] * 100)
-                      : settings[slider.key]}{' '}
-                    {slider.unit}
-                  </output>
-                </span>
-                <input
-                  id={`lab-${slider.key}`}
-                  type="range"
-                  min={slider.min}
-                  max={slider.max}
-                  step={slider.step}
-                  value={settings[slider.key]}
-                  onChange={(e) =>
-                    setSettings({ ...settings, [slider.key]: Number(e.target.value) })
-                  }
-                />
-              </label>
-            ))}
-            <label className="lab-check">
-              <input
-                type="checkbox"
-                checked={settings.floating}
-                onChange={(e) => setSettings({ ...settings, floating: e.target.checked })}
-              />
-              Środek pod pierwszym dotknięciem
-            </label>
-            <label className="lab-slider" htmlFor="lab-stick-size">
-              <span>
-                Rozmiar pada<output>{stickSize} px</output>
-              </span>
-              <input
-                id="lab-stick-size"
-                type="range"
-                min="140"
-                max="1000"
-                step="10"
-                value={stickSize}
-                onChange={(e) => {
-                  stop('Rozmiar pada')
-                  setStickSize(Number(e.target.value))
-                }}
-              />
-            </label>
-            <label className="lab-slider" htmlFor="lab-fire-size">
-              <span>
-                Rozmiar ognia<output>{fireSize} px</output>
-              </span>
-              <input
-                id="lab-fire-size"
-                type="range"
-                min="70"
-                max="180"
-                step="10"
-                value={fireSize}
-                onChange={(e) => {
-                  stop('Rozmiar ognia')
-                  setFireSize(Number(e.target.value))
-                }}
-              />
-            </label>
             <label className="lab-check">
               <input
                 type="checkbox"
@@ -916,13 +771,6 @@ export default function ControlLab() {
               />
               Labirynt · pełne i połówkowe przeszkody
             </label>
-            <p>
-              Margines zatrzymania: po ruszeniu cofnij kciuk poniżej{' '}
-              {Math.round(
-                Math.max(settings.deadZone, settings.turnZone - settings.modeMargin) * 100,
-              )}
-              %, aby wrócić do obrotu. Rozmiary przycisków są ograniczone dostępnym miejscem.
-            </p>
           </div>
         ) : (
           <div className="lab-log-panel">

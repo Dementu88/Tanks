@@ -147,7 +147,7 @@ export default function TestBench() {
           </tbody>
         </table>
         <p className="test-hint">Kliknij raz w telewizor, żeby włączyć dźwięk.</p>
-        <a href="#/sterowanie">Poligon sterowania — lokalnie, bez wrogów</a>
+        <a href="#/poligon">Poligon — lokalnie, bez wrogów</a>
       </div>
     </div>
   )

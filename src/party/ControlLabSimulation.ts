@@ -37,7 +37,7 @@ export interface LabGrid {
 }
 
 export const DEFAULT_LAB_GRID: LabGrid = {
-  enabled: false,
+  enabled: true,
   divisions: 8,
   quantizeMove: true,
   turnCells: 4,
@@ -64,7 +64,8 @@ export class ControlLabSimulation {
   private candidateFrames = 0
   private accepted: Pick<PadInput, 'direction' | 'turnOnly'> = IDLE_INPUT
   waitingForInput = false
-  private grid: LabGrid = { ...DEFAULT_LAB_GRID }
+  // sama symulacja startuje jak gra; włączoną siatkę daje panel poligonu (setGrid)
+  private grid: LabGrid = { ...DEFAULT_LAB_GRID, enabled: false }
   /** reszta ruchu poniżej jednej komórki, przenoszona na kolejny krok */
   private carry = 0
   private time = 0
@@ -93,7 +94,7 @@ export class ControlLabSimulation {
       touchedThisStage: true,
     }
     this.scene = new BattleScene(
-      TerrainMap.fromRaw({ name: 'Poligon sterowania', difficulty: 1, map, bots: [] }),
+      TerrainMap.fromRaw({ name: 'Poligon', difficulty: 1, map, bots: [] }),
       { play: () => {} },
       [],
       [player],

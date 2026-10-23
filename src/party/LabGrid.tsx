@@ -11,7 +11,7 @@ import {
 
 /**
  * Poligon: siatka komórek (np. 8×8 w kratce), obrysy kolizji, ścian i obszaru niszczenia
- * oraz panel suwaków. Wszystko tylko w #/sterowanie — gra z rodziną tego nie używa.
+ * oraz panel suwaków. Wszystko tylko w #/poligon — gra z rodziną tego nie używa.
  */
 
 export interface LabOverlay {
@@ -78,6 +78,19 @@ export function useLabGrid() {
       setState((s) => ({ ...s, overlay: { ...s.overlay, ...patch } })),
     reset: () => setState({ grid: { ...DEFAULT_LAB_GRID }, overlay: { ...DEFAULT_OVERLAY } }),
   }
+}
+
+/** jedna linijka pod planszą: co faktycznie działa teraz w poligonie */
+export function gridSummary(grid: LabGrid): string {
+  if (!grid.enabled) return 'Siatka wyłączona — ruch, skręt i niszczenie jak w grze'
+  const cell = cellSize(grid)
+  const f = (v: number) => v.toLocaleString('pl-PL', { maximumFractionDigits: 2 })
+  const move = grid.quantizeMove ? `ruch skokami co ${f(cell)} px` : 'ruch płynny'
+  const turn =
+    grid.turnCells === 0
+      ? 'skręt bez wyrównania'
+      : `skręt do linii co ${f(grid.turnCells * cell)} px`
+  return `Siatka ${grid.divisions}×${grid.divisions}: ${move} · ${turn} · dmg ${f(grid.damageWidth * cell)} × ${f(grid.damageDepth * cell)} px`
 }
 
 const px = (cells: number, grid: LabGrid) =>
@@ -319,6 +332,24 @@ export class LabOverlayPainter {
       }
     }
     if (overlay.damage) {
+      // gdzie wytnie pocisk, gdy trafi tuż przed lufą — zmienia się od razu z suwakami
+      const damage = sim.damage() ?? { width: 11, depth: 0 }
+      const { axis, delta } = getDirectionInfo(tank.direction)
+      const cx = tank.x + BLOCK_SIZE / 2
+      const cy = tank.y + BLOCK_SIZE / 2
+      const front =
+        axis === 'y'
+          ? delta < 0
+            ? tank.y
+            : tank.y + BLOCK_SIZE
+          : delta < 0
+            ? tank.x
+            : tank.x + BLOCK_SIZE
+      const w = damage.width
+      const d = Math.max(0.5, damage.depth)
+      if (axis === 'y') g.rect(cx - w / 2, delta < 0 ? front - d : front, w, d)
+      else g.rect(delta < 0 ? front - d : front, cy - w / 2, d, w)
+      g.stroke({ width: 1, pixelLine: true, color: 0xff8a2a, alpha: 0.9 })
       for (const b of sim.scene.bullets) {
         const r = sim.damageOf(b)
         g.rect(r.x, r.y, r.width, r.height).stroke({ width: 0.6, color: 0xff8a2a })

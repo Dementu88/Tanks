@@ -66,7 +66,7 @@ przez „Zapisz do pliku”. `sterowanie.json` pozostaje osobnym zapisem poligon
 
 ## Test bez zmieniania gry
 
-Otwórz `#/sterowanie` → Ustawienia → „Poziom czołgu i XP — podgląd”.
+Otwórz `#/poligon` → Ustawienia → „Poziom czołgu i XP — podgląd”.
 Cztery suwaki zmieniają czołg od razu, bez zdobywania ani wydawania XP z serwera.
 Pod planszą widać faktyczną prędkość, HP, odstęp strzałów i limit pocisków.
 „Trafienie −1 HP” testuje pancerz do minimum 1 HP, „Napraw pancerz” go uzupełnia.
