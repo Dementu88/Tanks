@@ -4,16 +4,16 @@
   color: #fff;
 }
 .rank-track {
-  fill: #140303;
-  stroke: #3c1010;
+  fill: var(--hud-surface);
+  stroke: var(--hud-dim);
   stroke-width: 6;
 }
 .rank-progress {
   fill: none;
-  stroke: var(--hud-accent, #ff2a2a);
+  stroke: var(--hud-accent);
   stroke-width: 6;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 3px rgba(255, 42, 42, 0.8));
+  filter: drop-shadow(0 0 3px rgba(var(--hud-rgb), 0.8));
 }
 .logo-circle {
   flex: none;
@@ -22,7 +22,7 @@
   justify-content: center;
   border-radius: 50%;
   background: #ddd3c1;
-  border: 3px solid #3c1010;
+  border: 3px solid var(--hud-dim);
   box-sizing: border-box;
 }
 /* w kółku tło daje samo kółko */
@@ -48,11 +48,11 @@
   color: #fff;
 }
 .player-card-rank {
-  color: #ff8585;
+  color: var(--hud-light);
   font-weight: 700;
 }
 .player-card-text small {
-  color: var(--hud-muted, #c19c9c);
+  color: var(--hud-muted);
 }
 .rank-gallery {
   display: grid;
@@ -69,13 +69,13 @@ body.party .rank-gallery-item {
   letter-spacing: 0.02em;
   text-transform: none;
   font-size: 10px;
-  color: #ffd0d0;
+  color: var(--hud-pale);
 }
 .rank-gallery-item svg {
   color: #fff;
 }
 .rank-gallery-item small {
-  color: var(--hud-muted, #c19c9c);
+  color: var(--hud-muted);
   font-weight: 400;
 }
 /* powiadomienie o awansie na planszy */
@@ -98,8 +98,8 @@ body.party .rank-gallery-item {
   gap: 10px;
   padding: 8px 16px 8px 8px;
   background: rgba(10, 1, 1, 0.92);
-  border: 1px solid var(--hud-accent, #ff2a2a);
-  box-shadow: 0 0 18px rgba(255, 42, 42, 0.45);
+  border: 1px solid var(--hud-accent);
+  box-shadow: 0 0 18px rgba(var(--hud-rgb), 0.45);
   clip-path: polygon(
     10px 0,
     100% 0,
@@ -117,7 +117,7 @@ body.party .rank-gallery-item {
   display: block;
   font: 700 10px var(--hud-font, monospace);
   letter-spacing: 0.3em;
-  color: #ff8585;
+  color: var(--hud-light);
 }
 .levelup-toast strong {
   font: 700 14px var(--hud-font, monospace);
@@ -157,6 +157,6 @@ body.party .rank-gallery-item {
 .pad-player-label small {
   font-size: 9px;
   letter-spacing: 0.06em;
-  color: #ff8585;
+  color: var(--hud-light);
   text-transform: none;
 }

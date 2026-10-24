@@ -51,7 +51,7 @@
   letter-spacing: 0.06em;
   overflow-wrap: anywhere;
   text-transform: uppercase;
-  color: var(--xp-color, #ff8585);
+  color: var(--xp-color);
 }
 .xp-trait span {
   display: block;
@@ -65,21 +65,21 @@ body.party .xp-trait button {
   font-size: 10px;
   letter-spacing: 0.08em;
 }
-/* kolory cech — odcienie czerwieni jak pad */
+/* kolory cech — odcienie zieleni jak pad */
 body.party .xp-speed {
-  --xp-color: #ffaaaa;
+  --xp-color: #c8ff8a;
 }
 body.party .xp-fire {
-  --xp-color: #ff5555;
+  --xp-color: #7dff3a;
 }
 body.party .xp-armor {
-  --xp-color: #d62b2b;
+  --xp-color: #3fd16a;
 }
 body.party .xp-bullet {
-  --xp-color: #ff8a5c;
+  --xp-color: #e2ff3a;
 }
 body.party .xp-shield {
-  --xp-color: #ffd5d5;
+  --xp-color: #e6ffd6;
 }
 .xp-level {
   display: flex !important;
@@ -94,8 +94,8 @@ body.party .xp-shield {
   transform: skewX(-20deg);
 }
 .xp-level i.on {
-  background: var(--xp-color, #ff2a2a);
-  box-shadow: 0 0 6px var(--xp-color, #ff2a2a);
+  background: var(--xp-color);
+  box-shadow: 0 0 6px var(--xp-color);
 }
 .xp-settings {
   margin-top: 16px;
@@ -106,7 +106,7 @@ body.party .xp-shield {
   font: 700 11px var(--hud-font, monospace);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #ff8585;
+  color: var(--hud-light);
 }
 .xp-settings fieldset {
   border: 0;

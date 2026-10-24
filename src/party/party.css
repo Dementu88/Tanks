@@ -204,11 +204,12 @@ body.party-pad {
 /* ---------- pad: czerwony HUD na czerni ---------- */
 
 body.party-pad {
-  --red: #ff2a2a;
-  --red-mid: #b01010;
-  --red-dim: #4a0606;
-  --red-faint: #1e0303;
-  --glow: drop-shadow(0 0 4px rgba(255, 42, 42, 0.85)) drop-shadow(0 0 12px rgba(255, 30, 30, 0.35));
+  --red: var(--hud-accent);
+  --red-mid: var(--hud-mid);
+  --red-dim: var(--hud-dim);
+  --red-faint: var(--hud-faint);
+  --glow: drop-shadow(0 0 4px rgba(var(--hud-rgb), 0.85))
+    drop-shadow(0 0 12px rgba(var(--hud-rgb), 0.35));
   --hud-font: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
   color: var(--red);
   font-family: var(--hud-font);
@@ -226,7 +227,7 @@ body.party-pad {
   text-align: center;
   font: 700 15px var(--hud-font, monospace);
   letter-spacing: 0.15em;
-  color: #ff2a2a;
+  color: var(--hud-accent);
   background: #000;
 }
 
@@ -238,8 +239,8 @@ body.party-pad {
   flex-direction: row;
   overflow: hidden;
   background:
-    radial-gradient(circle, rgba(255, 40, 40, 0.22) 1px, transparent 1.6px) 0 0 / 28px 28px,
-    radial-gradient(ellipse at 50% 60%, #120000 0%, #000 70%);
+    radial-gradient(circle, rgba(var(--hud-rgb), 0.22) 1px, transparent 1.6px) 0 0 / 28px 28px,
+    radial-gradient(ellipse at 50% 60%, #020800 0%, #000 70%);
 }
 .pad-top {
   flex: none;
@@ -248,7 +249,7 @@ body.party-pad {
   gap: 8px;
   padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
   border-bottom: 1px solid var(--red-dim);
-  background: linear-gradient(#0a0000, #000);
+  background: linear-gradient(var(--hud-surface), #000);
 }
 .pad-spacer {
   flex: 1;
@@ -294,8 +295,8 @@ body.party-pad {
   min-width: min(440px, 90%);
   padding: 18px 22px;
   border: 1px solid var(--red-dim);
-  background: #0a0000;
-  box-shadow: 0 0 24px rgba(255, 30, 30, 0.25);
+  background: var(--hud-surface);
+  box-shadow: 0 0 24px rgba(var(--hud-rgb), 0.25);
 }
 .pad-menu-title {
   font-size: 13px;
@@ -352,9 +353,9 @@ body.party-pad {
   padding: 0 16px;
   font: 700 12px var(--hud-font, monospace);
   letter-spacing: 0.2em;
-  color: #ff2a2a;
-  background: #1e0303;
-  border: 1px solid #b01010;
+  color: var(--hud-accent);
+  background: var(--hud-faint);
+  border: 1px solid var(--hud-mid);
   clip-path: polygon(
     var(--cut) 0,
     100% 0,
@@ -370,24 +371,24 @@ body.party-pad {
 }
 .hud-btn:active,
 .hud-btn.on {
-  background: #4a0606;
+  background: var(--hud-dim);
   color: #fff;
-  text-shadow: 0 0 6px #ff2a2a;
+  text-shadow: 0 0 6px var(--hud-accent);
 }
 .hud-btn.icon {
   width: 40px;
   padding: 0;
 }
 .hud-btn.dim {
-  color: #b01010;
-  border-color: #4a0606;
+  color: var(--hud-mid);
+  border-color: var(--hud-dim);
 }
 .hud-btn.primary {
-  background: #b01010;
-  border-color: #ff2a2a;
+  background: var(--hud-mid);
+  border-color: var(--hud-accent);
   color: #fff;
   padding: 0 26px;
-  box-shadow: 0 0 14px rgba(255, 30, 30, 0.5);
+  box-shadow: 0 0 14px rgba(var(--hud-rgb), 0.5);
 }
 
 .pad-middle {
@@ -430,7 +431,7 @@ body.party-pad {
   transform: none;
 }
 .hud-square {
-  fill: rgba(30, 0, 0, 0.45);
+  fill: rgba(var(--hud-dark-rgb), 0.45);
   stroke: var(--red);
   stroke-width: 0.6;
 }
@@ -593,7 +594,7 @@ body.party-pad {
   opacity: 0.8;
 }
 .hud-plate {
-  fill: rgba(30, 0, 0, 0.55);
+  fill: rgba(var(--hud-dark-rgb), 0.55);
   stroke: var(--red-mid);
   stroke-width: 0.6;
 }
@@ -602,20 +603,20 @@ body.party-pad {
   transition: fill 80ms;
 }
 .hud-quad.on {
-  fill: rgba(255, 30, 30, 0.18);
+  fill: rgba(var(--hud-rgb), 0.18);
 }
 .hud-divider {
   stroke: var(--red-dim);
   stroke-width: 0.6;
 }
 .hud-turn-ring {
-  fill: rgba(255, 30, 30, 0.04);
+  fill: rgba(var(--hud-rgb), 0.04);
   stroke: var(--red-mid);
   stroke-width: 0.6;
   stroke-dasharray: 1.5 1.5;
 }
 .pad-stick.turning .hud-turn-ring {
-  fill: rgba(255, 30, 30, 0.16);
+  fill: rgba(var(--hud-rgb), 0.16);
   stroke: var(--red);
 }
 .hud-arrow {
@@ -627,7 +628,7 @@ body.party-pad {
   filter: var(--glow);
 }
 .hud-knob {
-  fill: rgba(60, 0, 0, 0.9);
+  fill: rgba(var(--hud-deep-rgb), 0.9);
   stroke: var(--red);
   stroke-width: 1.4;
 }
@@ -652,7 +653,7 @@ body.party-pad {
   transition: fill 60ms;
 }
 .pad-fire.active .hud-fire-core {
-  fill: #5a0606;
+  fill: var(--hud-dim);
 }
 .hud-pulse {
   fill: none;
@@ -697,7 +698,7 @@ body.party-pad {
   text-align: center;
   background: #000;
   color: #fff;
-  border: 1px solid #b01010;
+  border: 1px solid var(--hud-mid);
   outline: none;
 }
 
@@ -726,7 +727,7 @@ body.party-pad {
 .pad-zone input::-webkit-slider-runnable-track {
   height: 3px;
   background: linear-gradient(90deg, var(--red-dim), var(--red));
-  box-shadow: 0 0 6px rgba(255, 30, 30, 0.5);
+  box-shadow: 0 0 6px rgba(var(--hud-rgb), 0.5);
 }
 .pad-zone input::-moz-range-track {
   height: 3px;
@@ -740,7 +741,7 @@ body.party-pad {
   background: #000;
   border: 2px solid var(--red);
   transform: rotate(45deg);
-  box-shadow: 0 0 8px rgba(255, 30, 30, 0.8);
+  box-shadow: 0 0 8px rgba(var(--hud-rgb), 0.8);
 }
 .pad-zone input::-moz-range-thumb {
   width: 14px;
@@ -776,12 +777,12 @@ body.party-pad {
   padding: 12px;
   background: #000;
   font-family: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
-  color: #ff2a2a;
+  color: var(--hud-accent);
 }
 .test-tv {
   flex: 1;
   min-width: 0;
-  border: 1px solid #4a0606;
+  border: 1px solid var(--hud-dim);
   background: #000;
 }
 .test-side {
@@ -798,7 +799,7 @@ body.party-pad {
 /* w trakcie gry: wąski pasek, TV na prawie cały ekran (pad dalej działa z klawiatury) */
 .test-side.collapsed {
   width: 36px;
-  border-left: 1px solid #4a0606;
+  border-left: 1px solid var(--hud-dim);
 }
 .test-side.collapsed > :not(.test-toggle) {
   visibility: hidden;
@@ -815,13 +816,13 @@ body.party-pad {
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid #4a0606;
-  background: #0a0000;
-  color: #ff2a2a;
+  border: 1px solid var(--hud-dim);
+  background: var(--hud-surface);
+  color: var(--hud-accent);
   cursor: pointer;
 }
 .test-toggle:hover {
-  background: #4a0606;
+  background: var(--hud-dim);
   color: #fff;
 }
 .test-toggle svg {
@@ -831,8 +832,8 @@ body.party-pad {
 .test-pad-box {
   position: relative;
   overflow: hidden;
-  border: 1px solid #b01010;
-  box-shadow: 0 0 18px rgba(255, 30, 30, 0.25);
+  border: 1px solid var(--hud-mid);
+  box-shadow: 0 0 18px rgba(var(--hud-rgb), 0.25);
 }
 .test-pad {
   position: absolute;
@@ -856,7 +857,7 @@ body.party-pad {
 }
 .test-keys td {
   padding: 3px 10px;
-  border-bottom: 1px solid #1e0303;
+  border-bottom: 1px solid var(--hud-faint);
 }
 .test-keys td:first-child {
   color: #fff;
@@ -865,7 +866,7 @@ body.party-pad {
 .test-hint {
   margin: 0;
   font-size: 11px;
-  color: #b01010;
+  color: var(--hud-mid);
 }
 
 /* ---------- #/dev: tryb developera ---------- */
@@ -875,14 +876,14 @@ body.party-pad {
   inset: 0;
   display: flex;
   background: #000;
-  color: #ff2a2a;
+  color: var(--hud-accent);
   font-family: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
 }
 .dev-game {
   flex: 1;
   min-width: 0;
   border: 0;
-  border-right: 1px solid #4a0606;
+  border-right: 1px solid var(--hud-dim);
 }
 .dev-panel {
   flex: none;
@@ -905,7 +906,7 @@ body.party-pad {
   color: #7dff9a;
 }
 .dev-bad {
-  color: #ff7a7a;
+  color: var(--hud-light);
 }
 .dev-tabs {
   display: flex;
@@ -914,21 +915,21 @@ body.party-pad {
 .dev-tabs button,
 .dev-btn {
   font: inherit;
-  color: #ff2a2a;
-  background: #1e0303;
-  border: 1px solid #b01010;
+  color: var(--hud-accent);
+  background: var(--hud-faint);
+  border: 1px solid var(--hud-mid);
   padding: 6px 10px;
   cursor: pointer;
 }
 .dev-tabs button.on,
 .dev-btn.on {
-  background: #4a0606;
+  background: var(--hud-dim);
   color: #fff;
 }
 .dev-btn.primary {
-  background: #b01010;
+  background: var(--hud-mid);
   color: #fff;
-  border-color: #ff2a2a;
+  border-color: var(--hud-accent);
 }
 .dev-section-list {
   display: flex;
@@ -940,8 +941,8 @@ body.party-pad {
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  border: 1px solid #4a0606;
-  background: #0a0000;
+  border: 1px solid var(--hud-dim);
+  background: var(--hud-surface);
 }
 .dev-section h3 {
   margin: 0;
@@ -950,7 +951,7 @@ body.party-pad {
   color: #fff;
 }
 .dev-section h3 small {
-  color: #b01010;
+  color: var(--hud-mid);
   font-size: 11px;
 }
 .dev-row {
@@ -970,7 +971,7 @@ body.party-pad {
   color: #fff;
 }
 .dev-slider input {
-  accent-color: #ff2a2a;
+  accent-color: var(--hud-accent);
 }
 .dev-inline {
   flex-direction: row;
@@ -980,7 +981,7 @@ body.party-pad {
 .dev-note {
   margin: 0;
   font-size: 10px;
-  color: #b01010;
+  color: var(--hud-mid);
 }
 .dev-msg {
   margin: 0;
@@ -1007,7 +1008,7 @@ body.party-pad {
 }
 .dev-left {
   width: 340px;
-  border-right: 1px solid #4a0606;
+  border-right: 1px solid var(--hud-dim);
 }
 .dev-grid {
   display: grid;
@@ -1027,13 +1028,13 @@ body.party-pad {
 }
 .dev-label {
   min-width: 56px;
-  color: #b01010;
+  color: var(--hud-mid);
 }
 .dev-dim {
   opacity: 0.55;
 }
 .dev-btn:hover {
-  border-color: #ff2a2a;
+  border-color: var(--hud-accent);
 }
 .dev-tank-preview {
   display: flex;
@@ -1047,7 +1048,7 @@ body.party-pad {
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: 1px dashed #b01010;
+  outline: 1px dashed var(--hud-mid);
   overflow: visible;
 }
 .dev-cell img {
@@ -1075,8 +1076,8 @@ body.party-pad {
   gap: 4px;
   padding: 6px;
   background: #000;
-  border: 1px solid #4a0606;
-  color: #b01010;
+  border: 1px solid var(--hud-dim);
+  color: var(--hud-mid);
   font-size: 10px;
   text-decoration: none;
 }
@@ -1118,7 +1119,7 @@ body.party-pad {
   flex: 1 0 100%;
   font-size: 10px;
   letter-spacing: 0.08em;
-  color: var(--red-mid, #b01010);
+  color: var(--red-mid);
 }
 .profile-logo {
   /* ciemny awatar na jasnym kółku — jasny na ciemnym wychodził jak negatyw */
@@ -1188,7 +1189,7 @@ body.party .pad-logo-step {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--hud-accent, #ff2a2a);
+  color: var(--hud-accent);
   cursor: pointer;
 }
 body.party .pad-logo-step svg {
