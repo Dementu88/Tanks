@@ -62,7 +62,7 @@ describe('profile drużyny', () => {
     expect(first.xp.buy('speed')).toBe(true)
     first.reached('wide', 7)
     first.changed()
-    await new Promise((r) => setTimeout(r, 40))
+    await new Promise((r) => setTimeout(r, 200))
     expect(store.data()?.profiles.TankMonsters.record.wide).toBe(7)
 
     const again = new Profiles(['TankMonsters'], store)

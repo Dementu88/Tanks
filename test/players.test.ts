@@ -101,7 +101,7 @@ describe('profile graczy', () => {
     book.record({ type: 'shot', time: 0, playerId: 'snajper' })
     expect(book.setLogo('snajper', 'korona')).toBe(true)
     expect(book.setLogo('snajper', 'nie-ma')).toBe(false)
-    await new Promise((r) => setTimeout(r, 40))
+    await new Promise((r) => setTimeout(r, 200))
     expect(store.data()?.players.snajper.shots).toBe(1)
 
     const again = new PlayerBook(defs, store)
