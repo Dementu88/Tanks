@@ -132,3 +132,27 @@ body.party .rank-gallery-item {
     opacity: 0;
   }
 }
+
+/* powiadomienie o awansie w grze (TV i pad) */
+.promotion-layer {
+  position: fixed;
+  top: 3vh;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 60;
+}
+.pad-player-label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+.pad-player-label small {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #ff8585;
+  text-transform: none;
+}

@@ -18,21 +18,39 @@ export interface RankDef {
 const num = (v: unknown, min = 0) =>
   typeof v === 'number' && Number.isFinite(v) && v >= min ? Math.floor(v) : 0
 
-export const RANKS: RankDef[] = ((ranksConfig as { stopnie?: Partial<RankDef>[] }).stopnie ?? [])
-  .map((r) => ({
-    nazwa: String(r.nazwa ?? '?'),
-    xp: num(r.xp),
-    belki: Math.min(4, num(r.belki)),
-    galony: Math.min(4, num(r.galony)),
-    gwiazdki: Math.min(4, num(r.gwiazdki)),
-    wezyk: r.wezyk === true,
-  }))
-  .sort((a, b) => a.xp - b.xp)
+const cfg = ranksConfig as {
+  stopnie?: Partial<RankDef>[]
+  pierwszyAwansXp?: unknown
+  kolejnyMnoznik?: unknown
+}
+/** XP na pierwszy awans (ok. 10 gier) */
+export const FIRST_PROMOTION_XP = num(cfg.pierwszyAwansXp, 1) || 10000
+/** każdy kolejny awans wymaga tyle razy więcej XP niż poprzedni */
+export const PROMOTION_GROWTH =
+  typeof cfg.kolejnyMnoznik === 'number' && cfg.kolejnyMnoznik >= 1 ? cfg.kolejnyMnoznik : 1.12
+
+/** próg XP stopnia o numerze i (0 = pierwszy): suma rosnących kroków */
+export function rankThreshold(i: number): number {
+  let total = 0
+  let step = FIRST_PROMOTION_XP
+  for (let k = 0; k < i; k++) {
+    total += step
+    step *= PROMOTION_GROWTH
+  }
+  return Math.round(total)
+}
+
+export const RANKS: RankDef[] = (cfg.stopnie ?? []).map((r, i) => ({
+  nazwa: String(r.nazwa ?? '?'),
+  xp: rankThreshold(i),
+  belki: Math.min(4, num(r.belki)),
+  galony: Math.min(4, num(r.galony)),
+  gwiazdki: Math.min(4, num(r.gwiazdki)),
+  wezyk: r.wezyk === true,
+}))
 
 if (RANKS.length === 0)
   RANKS.push({ nazwa: 'Szeregowy', xp: 0, belki: 0, galony: 0, gwiazdki: 0, wezyk: false })
-// pierwszy stopień zawsze od zera
-RANKS[0].xp = 0
 
 export const LEVEL_UP_MS = Math.max(
   1000,

@@ -28,6 +28,8 @@ import {
 import { PAD_SLOTS, WIDE_STAGE, type PartyRoomState } from './protocol'
 import { hasRecordStart, recordStage } from './profileView'
 import { PlayerPicker, useRememberedPlayer } from './PlayerProfile'
+import { PromotionToast } from './RankBadge'
+import './ranks.css'
 import { useBodyClass } from './shared'
 import '@fontsource/orbitron/500.css'
 import '@fontsource/orbitron/700.css'
@@ -340,6 +342,7 @@ export default function PadScreen({
         </div>
       </div>
       {menu && host && <HostMenu room={room} onClose={closeMenu} />}
+      <PromotionToast />
     </div>
   )
 }

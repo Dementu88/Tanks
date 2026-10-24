@@ -25,6 +25,8 @@ export interface PartyState {
   full: boolean
   /** pad: ten slot przejął inny telefon */
   replaced: boolean
+  /** ostatni awans gracza (powiadomienie na kilka sekund) */
+  promotion: { name: string; logo: string; rank: number; key: number } | null
 }
 
 const INITIAL: PartyState = {
@@ -37,6 +39,7 @@ const INITIAL: PartyState = {
   denied: false,
   full: false,
   replaced: false,
+  promotion: null,
 }
 
 export const usePartyStore = create<PartyState>(() => INITIAL)
@@ -193,6 +196,11 @@ function handle(msg: PartyServerMessage): void {
       return
     case 'tank-config':
       setPlayerStatsTable(msg.stats)
+      return
+    case 'promotion':
+      usePartyStore.setState({
+        promotion: { name: msg.name, logo: msg.logo, rank: msg.rank, key: Date.now() },
+      })
       return
   }
 }

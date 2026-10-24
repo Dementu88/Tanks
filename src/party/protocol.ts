@@ -54,7 +54,7 @@ export interface PartyRoomState {
   difficultyChooser: number | null
   xp?: XpState
   /** profile graczy do wyboru (logo = id z config/loga.json) */
-  players?: { id: string; name: string; logo: string }[]
+  players?: { id: string; name: string; logo: string; xp: number }[]
   /** profil gracza wybrany przez każdy pad (null = gość) */
   padPlayers?: (string | null)[]
   /** krótkie statystyki gracza przy każdym padzie */
@@ -94,6 +94,8 @@ export type PartyServerMessage =
   | { t: 'dev-stats'; stats: PlayerLevelStats[] }
   /** tryb developera: wynik operacji (zapis do pliku itd.) */
   | { t: 'dev-result'; ok: boolean; message: string }
+  /** awans gracza — kilkusekundowe powiadomienie dla wszystkich */
+  | { t: 'promotion'; name: string; logo: string; rank: number }
   /** tryb developera: stan gry i graczy (kilka razy na sekundę) */
   | { t: 'dev-state'; state: DevState }
 

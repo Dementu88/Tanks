@@ -1,122 +1,103 @@
 {
-  "opis": "Stopnie graczy (wojsko polskie). xp = ile XP gracza trzeba, żeby dostać stopień (pierwszy zawsze 0). Odznaka rysowana wektorowo: gwiazdki (u góry), galony (szerokie paski), belki (wąskie paski), wezyk (generalski zygzak na dole). XP gracza: za zniszczonego wroga tyle, ile w config/rozgrywka.json → xp.killRewards. Powiadomienie o awansie trwa powiadomienieMs.",
+  "opis": "Stopnie graczy (wojsko polskie). XP gracza: za zniszczonego wroga tyle, ile w config/rozgrywka.json → xp.killRewards (20–80). Typowa gra to ok. 1000 XP, więc pierwszyAwansXp 10000 ≈ 10 gier. Każdy kolejny awans wymaga kolejnyMnoznik razy więcej XP niż poprzedni (1.12 = +12%). Odznaka rysowana wektorowo: gwiazdki, galony (szerokie paski), belki (wąskie), wezyk (generalski zygzak). Powiadomienie o awansie trwa powiadomienieMs.",
+  "pierwszyAwansXp": 10000,
+  "kolejnyMnoznik": 1.12,
   "powiadomienieMs": 4000,
   "stopnie": [
     {
-      "nazwa": "Szeregowy",
-      "xp": 0
+      "nazwa": "Szeregowy"
     },
     {
       "nazwa": "Starszy szeregowy",
-      "xp": 200,
       "belki": 1
     },
     {
       "nazwa": "Kapral",
-      "xp": 500,
       "belki": 2
     },
     {
       "nazwa": "Starszy kapral",
-      "xp": 900,
       "belki": 3
     },
     {
       "nazwa": "Plutonowy",
-      "xp": 1400,
       "galony": 1
     },
     {
       "nazwa": "Sierżant",
-      "xp": 2000,
       "galony": 2
     },
     {
       "nazwa": "Starszy sierżant",
-      "xp": 2800,
       "galony": 3
     },
     {
       "nazwa": "Młodszy chorąży",
-      "xp": 3800,
       "galony": 1,
       "gwiazdki": 1
     },
     {
       "nazwa": "Chorąży",
-      "xp": 5000,
       "galony": 1,
       "gwiazdki": 2
     },
     {
       "nazwa": "Starszy chorąży",
-      "xp": 6400,
       "galony": 1,
       "gwiazdki": 3
     },
     {
       "nazwa": "Starszy chorąży sztabowy",
-      "xp": 8000,
       "galony": 2,
       "gwiazdki": 3
     },
     {
       "nazwa": "Podporucznik",
-      "xp": 10000,
       "belki": 1,
       "gwiazdki": 1
     },
     {
       "nazwa": "Porucznik",
-      "xp": 12500,
       "belki": 1,
       "gwiazdki": 2
     },
     {
       "nazwa": "Kapitan",
-      "xp": 15500,
       "belki": 1,
       "gwiazdki": 3
     },
     {
       "nazwa": "Major",
-      "xp": 19000,
       "belki": 2,
       "gwiazdki": 1
     },
     {
       "nazwa": "Podpułkownik",
-      "xp": 23000,
       "belki": 2,
       "gwiazdki": 2
     },
     {
       "nazwa": "Pułkownik",
-      "xp": 27500,
       "belki": 2,
       "gwiazdki": 3
     },
     {
       "nazwa": "Generał brygady",
-      "xp": 33000,
       "wezyk": true,
       "gwiazdki": 1
     },
     {
       "nazwa": "Generał dywizji",
-      "xp": 39000,
       "wezyk": true,
       "gwiazdki": 2
     },
     {
       "nazwa": "Generał broni",
-      "xp": 46000,
       "wezyk": true,
       "gwiazdki": 3
     },
     {
       "nazwa": "Generał",
-      "xp": 54000,
       "wezyk": true,
       "gwiazdki": 4
     }

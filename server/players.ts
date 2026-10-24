@@ -4,6 +4,8 @@ import playersConfig from '../config/gracze.json'
 import logosConfig from '../config/loga.json'
 import type { GameEvent } from '../src/engine/events'
 import type { TankLevel } from '../src/engine/types'
+import { GAMEPLAY } from '../src/engine/gameplayConfig'
+import { rankIndex } from '../src/party/ranks'
 
 /**
  * Profile graczy: lekkie liczniki statystyk (zabici wrogowie, rundy, gry, strzały…) zapisywane
@@ -124,6 +126,8 @@ export class PlayerBook {
   private timer: ReturnType<typeof setTimeout> | null = null
   private saving: Promise<void> = Promise.resolve()
   readonly ready: Promise<void>
+  /** awans gracza (nowy stopień = indeks w config/stopnie.json) — serwer ogłasza go wszystkim */
+  onPromotion: ((id: string, rank: number) => void) | null = null
 
   constructor(
     defs: PlayerDef[] = configuredPlayers(),
@@ -233,6 +237,12 @@ export class PlayerBook {
         bump(event.playerId, (s) => {
           s.kills[event.level] += 1
           if (event.by === 'grenade') s.grenadeKills += 1
+          // XP gracza (stopnie) — tyle samo co pula drużyny za tego wroga
+          const before = rankIndex(s.xp)
+          s.xp += GAMEPLAY.xpKillRewards[event.level]
+          const after = rankIndex(s.xp)
+          s.level = after
+          if (after > before && event.playerId != null) this.onPromotion?.(event.playerId, after)
         })
         return
       case 'shot':

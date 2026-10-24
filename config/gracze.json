@@ -1,7 +1,15 @@
 {
   "opis": "Profile graczy (pod przyszłe poziomy postaci). Dodawanie, edycja i usuwanie: aktualizuj_serwer.bat, opcje 9-12. id nie zmieniaj — po nim trzymane są statystyki. logo = id z config/loga.json.",
   "gracze": [
-    { "id": "kapitan", "nazwa": "Kapitan", "logo": "gwiazda" },
-    { "id": "snajper", "nazwa": "Snajper", "logo": "celownik" }
+    {
+      "id": "kapitan",
+      "nazwa": "Kapitan",
+      "logo": "czaszka"
+    },
+    {
+      "id": "snajper",
+      "nazwa": "Snajper",
+      "logo": "wilk"
+    }
   ]
 }

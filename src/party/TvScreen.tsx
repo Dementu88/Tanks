@@ -35,6 +35,8 @@ import { LocalPad, type LocalPadState } from './localPad'
 import { WIDE_STAGE, type PartyRoomState } from './protocol'
 import { hasRecordStart, recordStage } from './profileView'
 import { ProfileLogo } from './PlayerProfile'
+import { PromotionToast, RankCircle } from './RankBadge'
+import './ranks.css'
 import { PlayerBadge, useBodyClass } from './shared'
 import './party.css'
 
@@ -115,17 +117,21 @@ export default function TvScreen({
           xp={room.xp?.config.enabled === true}
         />
         <TvXp room={room} />
+        <PromotionToast />
       </>
     )
   }
   return (
-    <TvLobby
-      room={room}
-      localPlayers={localPlayers}
-      keyboardOn={keyboardOn}
-      onKeyboard={setKeyboardOn}
-      mute={mute}
-    />
+    <>
+      <TvLobby
+        room={room}
+        localPlayers={localPlayers}
+        keyboardOn={keyboardOn}
+        onKeyboard={setKeyboardOn}
+        mute={mute}
+      />
+      <PromotionToast />
+    </>
   )
 }
 
@@ -470,6 +476,7 @@ function TvLobby({
                   {profile != null && (
                     <span className="tv-pad-profile">
                       <ProfileLogo id={profile.logo} size={26} />
+                      <RankCircle xp={profile.xp} size={26} />
                       {profile.name}
                     </span>
                   )}

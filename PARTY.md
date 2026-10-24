@@ -162,3 +162,11 @@ bonusy, życia, punkty i czas gry. Pola `level` i `xp` czekają na przyszłe poz
   `data/gracze-statystyki.json` lokalnie albo do `PARTY_DATA_DIR` na serwerze.
 
 Profil drużyny (np. TankMonsters, XP i rekord) wybiera się osobno: „Drużyna” na TV i w MENU.
+
+## Stopnie graczy
+
+Gracz z profilem zbiera XP za zniszczonych wrogów (tyle samo co pula drużyny, `xp.killRewards`).
+Stopnie (Szeregowy → Generał) i ich progi są w `config/stopnie.json`: `pierwszyAwansXp` (10000 ≈
+10 gier) i `kolejnyMnoznik` (każdy kolejny awans +12% trudniejszy). Na padzie i na TV są dwa kółka:
+awatar gracza i odznaka stopnia z pierścieniem postępu. Awans pokazuje się wszystkim na kilka sekund.
+Awatary (64) są w `config/loga.json`.

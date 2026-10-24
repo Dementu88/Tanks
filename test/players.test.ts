@@ -6,6 +6,7 @@ import {
   type PlayersFile,
   type PlayersStore,
 } from '../server/players'
+import { GAMEPLAY } from '../src/engine/gameplayConfig'
 
 const defs = [
   { id: 'kapitan', name: 'Kapitan', logo: 'gwiazda' },
@@ -85,7 +86,8 @@ describe('profile graczy', () => {
       score: 700,
       playTimeMs: 60000,
       level: 0,
-      xp: 0,
+      // XP gracza za wrogów (pancerny + zwykły z granatu), jak w config/rozgrywka.json
+      xp: GAMEPLAY.xpKillRewards.armor + GAMEPLAY.xpKillRewards.basic,
     })
     expect(s.kills).toEqual({ basic: 1, fast: 0, power: 0, armor: 1 })
     expect(book.statsOf('snajper')!.games).toBe(0)
@@ -174,5 +176,29 @@ describe('profile graczy w serwerze', () => {
       party.close()
       await new Promise((r) => server.close(r))
     }
+  })
+})
+
+describe('stopnie graczy w grze', () => {
+  it('XP za wrogów rośnie i przy progu ogłasza awans', async () => {
+    const { FIRST_PROMOTION_XP } = await import('../src/party/ranks')
+    const { GAMEPLAY } = await import('../src/engine/gameplayConfig')
+    const book = new PlayerBook(defs, null)
+    await book.ready
+    const promotions: [string, number][] = []
+    book.onPromotion = (id, rank) => promotions.push([id, rank])
+    const kills = Math.ceil(FIRST_PROMOTION_XP / GAMEPLAY.xpKillRewards.armor)
+    for (let i = 0; i < kills; i++)
+      book.record({
+        type: 'bot_killed',
+        time: 0,
+        playerId: 'kapitan',
+        level: 'armor',
+        score: 0,
+        by: 'bullet',
+      })
+    expect(book.statsOf('kapitan')!.xp).toBe(kills * GAMEPLAY.xpKillRewards.armor)
+    expect(book.statsOf('kapitan')!.level).toBe(1)
+    expect(promotions).toEqual([['kapitan', 1]])
   })
 })

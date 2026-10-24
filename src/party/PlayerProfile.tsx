@@ -2,12 +2,16 @@ import { useEffect, useRef } from 'react'
 import logosConfig from '../../config/loga.json'
 import { sendParty } from './client'
 import type { PartyRoomState } from './protocol'
+import { LogoCircle, RankCircle } from './RankBadge'
+import { rankProgress } from './ranks'
 
 /** Profile graczy na padzie: wybór lewo / prawo, logo i krótkie statystyki. */
 
 interface LogoDef {
   id: string
   nazwa: string
+  /** pole rysunku; brak = 0 0 24 24 */
+  viewBox?: string
   svg: string
 }
 
@@ -20,7 +24,7 @@ export function ProfileLogo({ id, size = 22 }: { id: string | null | undefined; 
   return (
     <svg
       className="profile-logo"
-      viewBox="0 0 24 24"
+      viewBox={logo.viewBox ?? '0 0 24 24'}
       width={size}
       height={size}
       aria-label={logo.nazwa}
@@ -116,8 +120,16 @@ export function PlayerPicker({ room, slot }: { room: PartyRoomState; slot: numbe
         onClick={nextLogo}
         disabled={me == null}
       >
-        {me != null && <ProfileLogo id={me.logo} size={20} />}
-        {me?.name.toUpperCase() ?? 'GOŚĆ'}
+        {me != null && (
+          <>
+            <LogoCircle logo={me.logo} size={30} />
+            <RankCircle xp={me.xp} size={30} />
+          </>
+        )}
+        <span className="pad-player-label">
+          {me?.name.toUpperCase() ?? 'GOŚĆ'}
+          {me != null && <small>{rankProgress(me.xp).rank.nazwa}</small>}
+        </span>
       </button>
       <button
         type="button"

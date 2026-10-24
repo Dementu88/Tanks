@@ -211,6 +211,22 @@ export function createPartyServer({
         ? 'wide'
         : 'random'
   const memberOf = new Map<WebSocket, Room>()
+  // awans gracza: krótkie powiadomienie na wszystkich ekranach i padach
+  book.onPromotion = (id, rank) => {
+    const def = book.def(id)
+    if (def == null) return
+    const text = JSON.stringify({
+      t: 'promotion',
+      name: def.name,
+      logo: book.logoOf(id),
+      rank,
+    } satisfies PartyServerMessage)
+    for (const room of rooms.values()) {
+      for (const ws of room.tvs) send(ws, text)
+      for (const pad of room.pads) send(pad?.ws, text)
+      broadcastRoom(room)
+    }
+  }
 
   const newCode = (): string | null => {
     for (let i = 0; i < 100; i += 1) {
@@ -271,7 +287,12 @@ export function createPartyServer({
     difficultyNames: DIFFICULTY_LEVELS.map((d) => d.nazwa),
     difficultyChooser: difficultyChooser(room),
     xp: profiles.xp.snapshot(),
-    players: book.defs.map((d) => ({ id: d.id, name: d.name, logo: book.logoOf(d.id) })),
+    players: book.defs.map((d) => ({
+      id: d.id,
+      name: d.name,
+      logo: book.logoOf(d.id),
+      xp: book.statsOf(d.id)?.xp ?? 0,
+    })),
     padPlayers: room.pads.map((p) => p?.player ?? null),
     padStats: room.pads.map((p) => {
       const s = p?.player == null ? undefined : book.statsOf(p.player)

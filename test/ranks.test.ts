@@ -21,3 +21,13 @@ describe('stopnie graczy', () => {
     expect(rankProgress(1e9).next).toBeNull()
   })
 })
+
+describe('progi stopni z configu', () => {
+  it('pierwszy awans ok. 10 gier, każdy kolejny krok większy', async () => {
+    const { FIRST_PROMOTION_XP } = await import('../src/party/ranks')
+    expect(RANKS[1].xp).toBe(FIRST_PROMOTION_XP)
+    for (let i = 2; i < RANKS.length; i++) {
+      expect(RANKS[i].xp - RANKS[i - 1].xp).toBeGreaterThan(RANKS[i - 1].xp - RANKS[i - 2].xp)
+    }
+  })
+})

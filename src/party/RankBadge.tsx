@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { usePartyStore } from './client'
 import { ProfileLogo } from './PlayerProfile'
-import { rankProgress, type RankDef } from './ranks'
+import { LEVEL_UP_MS, RANKS, rankProgress, type RankDef } from './ranks'
 
 /**
  * Dwa kółka profilu gracza: logo i odznaka stopnia z pierścieniem postępu do następnego stopnia.
@@ -167,6 +168,33 @@ export function LevelUpToast({ name, logo, rank }: { name: string; logo: string;
           {name} → {rank.nazwa}
         </strong>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Powiadomienie o awansie z serwera — pokazuje się na kilka sekund u wszystkich
+ * (TV i pady). Wstawiane raz na ekran.
+ */
+export function PromotionToast() {
+  const promotion = usePartyStore((s) => s.promotion)
+  const [shown, setShown] = useState<typeof promotion>(null)
+  useEffect(() => {
+    if (promotion == null) return
+    setShown(promotion)
+    const id = window.setTimeout(() => setShown(null), LEVEL_UP_MS)
+    return () => window.clearTimeout(id)
+  }, [promotion])
+  if (shown == null) return null
+  const rank = RANKS[shown.rank]
+  if (rank == null) return null
+  return (
+    <div
+      className="promotion-layer"
+      key={shown.key}
+      style={{ ['--toast-ms' as string]: `${LEVEL_UP_MS}ms` }}
+    >
+      <LevelUpToast name={shown.name} logo={shown.logo} rank={rank} />
     </div>
   )
 }
