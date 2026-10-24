@@ -1,6 +1,7 @@
 import { encodePadInput, IDLE_INPUT, type PadCommand, type PadInput } from './controls'
 import type { PartyClientMessage, PartyRoomState, PartyServerMessage } from './protocol'
 import { socketUrl } from './client'
+import { canTakeProfile, nextProfileId, rememberProfile, savedProfile } from './profilePick'
 
 export interface LocalPadState {
   slot: number | null
@@ -19,6 +20,9 @@ export class LocalPad {
   private bits = encodePadInput(IDLE_INPUT)
   private room: PartyRoomState | null = null
   private slot: number | null = null
+  private direction: PadInput['direction'] = null
+  /** zapamiętany profil wysłany po dołączeniu (raz na połączenie) */
+  private restored = false
 
   constructor(
     /** stały identyfikator (np. `<urządzenie>-pad0`) — ten sam pad wraca do swojego gracza */
@@ -40,10 +44,12 @@ export class LocalPad {
       const msg = JSON.parse(e.data) as PartyServerMessage
       if (msg.t === 'joined') {
         this.slot = msg.slot
+        this.restored = false
         this.onState({ slot: msg.slot, error: null })
         this.send({ t: 'in', b: this.bits })
       } else if (msg.t === 'room') {
         this.room = msg.room
+        this.restoreProfile()
       } else if (msg.t === 'error') {
         this.onState({ slot: null, error: msg.message })
       }
@@ -59,7 +65,37 @@ export class LocalPad {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg))
   }
 
+  /** klucz zapamiętanego profilu tego pada / klawiatury w przeglądarce */
+  private get profileKey(): string {
+    return 'party-player-' + this.device
+  }
+
+  /** po dołączeniu: zapamiętany profil, jeśli jest wolny */
+  private restoreProfile(): void {
+    const { room, slot } = this
+    if (this.restored || room == null || slot == null || room.playing) return
+    this.restored = true
+    const wanted = savedProfile(this.profileKey)
+    if (room.padPlayers?.[slot] != null || wanted == null) return
+    if (canTakeProfile(room, slot, wanted)) this.send({ t: 'player', id: wanted })
+  }
+
+  /** lobby: następny / poprzedni profil gracza (strzałki lewo-prawo albo ‹ › na ekranie) */
+  stepProfile(delta: number): void {
+    const { room, slot } = this
+    if (room == null || slot == null || room.playing || (room.players?.length ?? 0) === 0) return
+    const next = nextProfileId(room, slot, delta)
+    rememberProfile(this.profileKey, next)
+    this.send({ t: 'player', id: next })
+  }
+
   setInput(input: PadInput): void {
+    // w lobby lewo / prawo zmienia profil (tylko przy wciśnięciu, nie przy trzymaniu)
+    if (input.direction !== this.direction) {
+      this.direction = input.direction
+      if (input.direction === 'left') this.stepProfile(-1)
+      else if (input.direction === 'right') this.stepProfile(1)
+    }
     const bits = encodePadInput(input)
     if (bits === this.bits) return
     this.bits = bits

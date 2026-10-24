@@ -1125,3 +1125,11 @@ body.party-pad {
 .tv-pad-profile .profile-logo {
   filter: none;
 }
+
+/* ‹ › wyboru profilu przy graczu klawiatury / pada w lobby TV */
+.tv-profile-step {
+  padding: 0.4vh 0.8vh;
+}
+.tv-hint {
+  font-size: 2vh;
+}

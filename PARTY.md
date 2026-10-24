@@ -153,6 +153,8 @@ bonusy, życia, punkty i czas gry. Pola `level` i `xp` czekają na przyszłe poz
 
 - Wybór: na padzie w lobby strzałki przy nazwie (pierwsza pozycja to GOŚĆ, bez zapisu). Telefon
   pamięta swój profil i wybiera go sam po dołączeniu. Dwa telefony nie mogą mieć tego samego.
+- Klawiatura i pady podpięte do TV/PC: w lobby strzałka lewo / prawo (albo ‹ › przy graczu na
+  ekranie TV) zmienia profil. Przeglądarka pamięta profil osobno dla klawiatury i każdego pada.
 - Logo: kliknięcie nazwy na padzie zmienia logo na następne. Loga są w `config/loga.json`
   (SVG w polu 24 × 24); podmienimy je na loga od czata.
 - TV pokazuje logo i nazwę gracza przy jego miejscu.

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import logosConfig from '../../config/loga.json'
 import { sendParty } from './client'
+import { canTakeProfile, nextProfileId, rememberProfile, savedProfile } from './profilePick'
 import type { PartyRoomState } from './protocol'
 import { LogoCircle, RankCircle } from './RankBadge'
 import { rankProgress } from './ranks'
@@ -36,22 +37,8 @@ export function ProfileLogo({ id, size = 22 }: { id: string | null | undefined; 
 
 const STORAGE = 'party-player-id'
 
-function savedPlayer(): string | null {
-  try {
-    return localStorage.getItem(STORAGE)
-  } catch {
-    return null
-  }
-}
-
-function rememberPlayer(id: string | null): void {
-  try {
-    if (id == null) localStorage.removeItem(STORAGE)
-    else localStorage.setItem(STORAGE, id)
-  } catch {
-    // prywatne okno
-  }
-}
+const savedPlayer = () => savedProfile(STORAGE)
+const rememberPlayer = (id: string | null) => rememberProfile(STORAGE, id)
 
 /** telefon pamięta swój profil i wybiera go sam po dołączeniu (jeśli nikt go nie zajął) */
 export function useRememberedPlayer(room: PartyRoomState | null, slot: number | null): void {
@@ -62,8 +49,7 @@ export function useRememberedPlayer(room: PartyRoomState | null, slot: number | 
     const wanted = savedPlayer()
     sent.current = true
     if (mine != null || wanted == null) return
-    const taken = room.padPlayers?.some((p, i) => i !== slot && p === wanted)
-    if (room.players?.some((p) => p.id === wanted) && !taken) sendParty({ t: 'player', id: wanted })
+    if (canTakeProfile(room, slot, wanted)) sendParty({ t: 'player', id: wanted })
   }, [room, slot])
 }
 
@@ -85,14 +71,8 @@ export function PlayerPicker({ room, slot }: { room: PartyRoomState; slot: numbe
   const players = room.players ?? []
   if (players.length === 0) return null
   const mine = room.padPlayers?.[slot] ?? null
-  const taken = new Set(room.padPlayers?.filter((p, i) => i !== slot && p != null) as string[])
-  const options: (string | null)[] = [
-    null,
-    ...players.map((p) => p.id).filter((id) => !taken.has(id)),
-  ]
   const step = (delta: number) => {
-    const i = Math.max(0, options.indexOf(mine))
-    const next = options[(i + delta + options.length) % options.length]
+    const next = nextProfileId(room, slot, delta)
     rememberPlayer(next)
     sendParty({ t: 'player', id: next })
   }

@@ -186,6 +186,8 @@ function insideTestBench(): boolean {
 interface LocalPlayer extends LocalPadState {
   key: string
   label: string
+  /** zmiana profilu z ekranu (‹ ›) */
+  stepProfile: (delta: number) => void
 }
 
 function padLabel(name: string): string {
@@ -213,8 +215,17 @@ function useLocalPlayers(code: string | null, keyboard: boolean): LocalPlayer[] 
     const ensure = (key: string, label: string): LocalPad => {
       let pad = pads.get(key)
       if (pad == null) {
-        setPlayers((m) => new Map(m).set(key, { key, label, slot: null, error: null }))
-        pad = new LocalPad(deviceId() + '-' + key, code, (state) => patch(key, state))
+        const created = new LocalPad(deviceId() + '-' + key, code, (state) => patch(key, state))
+        pad = created
+        setPlayers((m) =>
+          new Map(m).set(key, {
+            key,
+            label,
+            slot: null,
+            error: null,
+            stepProfile: (delta) => created.stepProfile(delta),
+          }),
+        )
         pads.set(key, pad)
       }
       return pad
@@ -421,6 +432,38 @@ function useAudioLocked(): boolean {
   return locked
 }
 
+/** ‹ › przy graczu klawiatury / pada — zmiana profilu myszką */
+function ProfileStep({
+  right,
+  label,
+  onClick,
+}: {
+  right?: boolean
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="tv-toggle tv-profile-step"
+      aria-label={label}
+      onClick={(e) => {
+        onClick()
+        e.currentTarget.blur()
+      }}
+    >
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+        <path
+          d={right ? 'M9 5 L16 12 L9 19' : 'M15 5 L8 12 L15 19'}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        />
+      </svg>
+    </button>
+  )
+}
+
 function TvLobby({
   room,
   localPlayers,
@@ -473,18 +516,35 @@ function TvLobby({
               return (
                 <div key={slot} className={`tv-pad ${on ? 'on' : ''}`}>
                   <PlayerBadge slot={slot} />
-                  {profile != null && (
+                  {local != null && (room.players?.length ?? 0) > 0 && (
+                    <ProfileStep label="Poprzedni profil" onClick={() => local.stepProfile(-1)} />
+                  )}
+                  {profile != null ? (
                     <span className="tv-pad-profile">
                       <ProfileLogo id={profile.logo} size={26} />
                       <RankCircle xp={profile.xp} size={26} />
                       {profile.name}
                     </span>
+                  ) : (
+                    local != null && <span className="tv-pad-profile">Gość</span>
+                  )}
+                  {local != null && (room.players?.length ?? 0) > 0 && (
+                    <ProfileStep
+                      right
+                      label="Następny profil"
+                      onClick={() => local.stepProfile(1)}
+                    />
                   )}
                   <span>{status}</span>
                 </div>
               )
             })}
           </div>
+          {localPlayers.some((p) => p.slot != null) && (room.players?.length ?? 0) > 0 && (
+            <p className="tv-muted tv-hint">
+              Klawiatura i pady: strzałka lewo / prawo zmienia profil gracza
+            </p>
+          )}
           {localPlayers
             .filter((p) => p.error != null)
             .map((p) => (
