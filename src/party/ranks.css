@@ -1,0 +1,134 @@
+/* stopnie graczy: dwa kółka (logo + odznaka z postępem), powiadomienie o awansie */
+.rank-circle {
+  flex: none;
+  color: #fff;
+}
+.rank-track {
+  fill: #140303;
+  stroke: #3c1010;
+  stroke-width: 6;
+}
+.rank-progress {
+  fill: none;
+  stroke: var(--hud-accent, #ff2a2a);
+  stroke-width: 6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(255, 42, 42, 0.8));
+}
+.logo-circle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #140303;
+  border: 3px solid #3c1010;
+  box-sizing: border-box;
+}
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.player-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.player-card-text strong {
+  font: 700 13px var(--hud-font, monospace);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.player-card-rank {
+  color: #ff8585;
+  font-weight: 700;
+}
+.player-card-text small {
+  color: var(--hud-muted, #c19c9c);
+}
+.rank-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+  margin: 12px 0;
+}
+body.party .rank-gallery-item {
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 4px;
+  min-height: 0;
+  height: auto;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 10px;
+  color: #ffd0d0;
+}
+.rank-gallery-item svg {
+  color: #fff;
+}
+.rank-gallery-item small {
+  color: var(--hud-muted, #c19c9c);
+  font-weight: 400;
+}
+/* powiadomienie o awansie na planszy */
+.lab-arena {
+  position: relative;
+}
+.lab-toast-layer {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+.levelup-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 8px;
+  background: rgba(10, 1, 1, 0.92);
+  border: 1px solid var(--hud-accent, #ff2a2a);
+  box-shadow: 0 0 18px rgba(255, 42, 42, 0.45);
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+  animation:
+    levelup-in 0.35s ease-out,
+    levelup-out 0.5s ease-in calc(var(--toast-ms, 4000ms) - 0.5s) forwards;
+  text-align: left;
+}
+.levelup-toast small {
+  display: block;
+  font: 700 10px var(--hud-font, monospace);
+  letter-spacing: 0.3em;
+  color: #ff8585;
+}
+.levelup-toast strong {
+  font: 700 14px var(--hud-font, monospace);
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+@keyframes levelup-in {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+@keyframes levelup-out {
+  to {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}

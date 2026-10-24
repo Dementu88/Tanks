@@ -83,3 +83,16 @@ czyli komórka 2 px. Komórka to najmniejszy krok ruchu, wyrównania skrętu i n
 
 Ustawienia zapamiętuje przeglądarka (`party-control-lab-grid-v1`). Gra z rodziną ich nie używa —
 jak się sprawdzą, przeniesiemy je do gry.
+
+## Stopnie i awanse (podgląd w poligonie)
+
+Panel **Ustawienia → Stopnie i awanse**. Stopnie wojskowe (Szeregowy … Generał) liczą się
+z XP gracza za zniszczonych wrogów; progi i wygląd odznak są w `config/stopnie.json`
+(gwiazdki, galony, belki, wężyk generalski — rysowane wektorowo).
+
+- Dwa kółka profilu: logo gracza i odznaka stopnia z pierścieniem, ile zostało do następnego.
+- Przyciski +XP za wroga, +1000, suwak i galeria wszystkich stopni (klik = ustaw XP).
+- Awans pokazuje na planszy powiadomienie na `powiadomienieMs` (domyślnie 4 s).
+
+To tylko podgląd: XP próbne zostaje w przeglądarce. Po akceptacji przeniesiemy stopnie
+i powiadomienia do gry (pad, TV, inni gracze).

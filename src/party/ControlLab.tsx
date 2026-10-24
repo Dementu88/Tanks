@@ -24,6 +24,8 @@ import {
 } from './labProfile'
 import { useLabHost } from './useLabHost'
 import { gridSummary, LabGridPanel, LabOverlayPainter, useLabGrid } from './LabGrid'
+import { LabRanksPanel, LabToastView, useLabToast } from './LabRanks'
+import './ranks.css'
 
 const LIMIT = 2000
 const NAMES = { up: 'góra', down: 'dół', left: 'lewo', right: 'prawo' }
@@ -76,6 +78,7 @@ export default function ControlLab() {
   const previewRef = useRef(preview)
   previewRef.current = preview
   const labGrid = useLabGrid()
+  const [toast, setToast] = useLabToast()
   const gridRef = useRef(labGrid.grid)
   gridRef.current = labGrid.grid
   const overlayRef = useRef(labGrid.overlay)
@@ -556,6 +559,7 @@ export default function ControlLab() {
         </div>
         <div className="lab-arena">
           <div className="lab-canvas" ref={container} aria-label="Plansza testowa" />
+          <LabToastView toast={toast} />
           {!ready && !error && <p>Uruchamianie poligonu…</p>}
           {error && <p role="alert">{error}</p>}
           <div className="lab-live" aria-label="Stan sterowania">
@@ -700,6 +704,7 @@ export default function ControlLab() {
                 'Suwaki działają od razu. Najlepszy profil zachowaj przyciskiem Zapisz.'}
             </p>
             <LabGridPanel lab={labGrid} />
+            <LabRanksPanel onToast={setToast} />
             <details className="lab-preview" open>
               <summary>Poziom czołgu i XP — podgląd</summary>
               {(
