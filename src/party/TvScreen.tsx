@@ -117,6 +117,7 @@ export default function TvScreen({
           xp={room.xp?.config.enabled === true}
         />
         <TvXp room={room} />
+        {room.paused && <TvPauseMenu />}
         <PromotionToast />
       </>
     )
@@ -278,6 +279,40 @@ function useFitScale(width: number, height: number, bottom = 0): number {
     return () => window.removeEventListener('resize', onResize)
   })
   return scale
+}
+
+/** pauza na TV: graj dalej albo koniec gry (powrót do lobby) — myszką lub klawiszami */
+function TvPauseMenu() {
+  return (
+    <div className="tv-pause" role="dialog" aria-label="Pauza">
+      <p className="tv-pause-title">PAUZA</p>
+      <div className="tv-pause-buttons">
+        <button
+          type="button"
+          className="tv-toggle on"
+          onClick={(e) => {
+            sendParty({ t: 'pause' })
+            e.currentTarget.blur()
+          }}
+        >
+          Graj dalej
+        </button>
+        <button
+          type="button"
+          className="tv-toggle"
+          onClick={(e) => {
+            sendParty({ t: 'quit' })
+            e.currentTarget.blur()
+          }}
+        >
+          Koniec gry
+        </button>
+      </div>
+      <p className="tv-pause-keys">
+        Graj dalej: Esc / P / Enter / Options · Koniec gry (lobby): Q / L1
+      </p>
+    </div>
+  )
 }
 
 type StatisticsPayload = { view: StatisticsView; scores: number[] }

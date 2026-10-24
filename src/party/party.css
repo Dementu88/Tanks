@@ -1144,3 +1144,54 @@ body.party-pad {
 .tv-profile-hint {
   font-size: 2vh;
 }
+
+/* menu pauzy na TV: graj dalej / koniec gry */
+.tv-pause {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2vh;
+  padding: 3vh 4vh;
+  background: rgba(0, 0, 0, 0.88);
+  border: 2px solid #555;
+}
+.tv-pause-title {
+  margin: 0;
+  font-size: 5vh;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  color: #db2b00;
+}
+.tv-pause-buttons {
+  display: flex;
+  gap: 2vh;
+}
+.tv-pause-keys {
+  margin: 0;
+  color: #999;
+  font-size: 2vh;
+  text-align: center;
+}
+
+/* ‹ › awatara na padzie (w wierszu profilu) */
+body.party .pad-logo-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hud-accent, #ff2a2a);
+  cursor: pointer;
+}
+body.party .pad-logo-step svg {
+  width: 14px;
+  height: 14px;
+}

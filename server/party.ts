@@ -398,6 +398,15 @@ export function createPartyServer({
     broadcastRoom(room)
   }
 
+  const togglePause = (room: Room) => {
+    if (room.game == null) return
+    room.paused = !room.paused
+    room.game.lastTime = performance.now()
+    room.game.sounds.push('pause')
+    broadcastFrame(room, room.game)
+    broadcastRoom(room)
+  }
+
   const stopGame = (room: Room, result: LanResult | null) => {
     book.gameEnded()
     room.game = null
@@ -466,6 +475,10 @@ export function createPartyServer({
     // rekord profilu: najdalsza plansza w tym trybie
     if (profiles.reached(modeOf(game.random ? -1 : 0, game.cols), s.stageIndex)) broadcastRoom(room)
     if (s.phase === 'ended') {
+      // koniec gry (przegrana albo wszystkie plansze): następna gra od pierwszej planszy;
+      // „Start od rekordu” można znów włączyć w lobby
+      room.fromRecord = false
+      if (room.stageIndex >= 0) room.stageIndex = 0
       stopGame(room, { stageName: s.stage.name, scores: s.scores, cleared: s.cleared })
     }
   }
@@ -811,6 +824,11 @@ export function createPartyServer({
       }
       return
     }
+    if (room.tvs.has(ws) && (msg.t === 'pause' || msg.t === 'quit')) {
+      if (msg.t === 'pause') togglePause(room)
+      else if (room.game != null) stopGame(room, null)
+      return
+    }
     if (pad == null) return
     switch (msg.t) {
       case 'in': {
@@ -853,13 +871,7 @@ export function createPartyServer({
         }
         return
       case 'pause':
-        if (room.game != null) {
-          room.paused = !room.paused
-          room.game.lastTime = performance.now()
-          room.game.sounds.push('pause')
-          broadcastFrame(room, room.game)
-          broadcastRoom(room)
-        }
+        togglePause(room)
         return
       case 'quit':
         if (room.game != null) stopGame(room, null)

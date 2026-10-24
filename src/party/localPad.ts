@@ -104,6 +104,11 @@ export class LocalPad {
 
   command(command: PadCommand): void {
     const playing = this.room?.playing === true
+    // pauza: Q / L1 kończy grę i wraca do lobby
+    if (playing && this.room?.paused === true && command === 'stage-prev') {
+      this.send({ t: 'quit' })
+      return
+    }
     if (command === 'start') this.send(playing ? { t: 'pause' } : { t: 'start' })
     else if (command === 'pause' && playing) this.send({ t: 'pause' })
     else if (command === 'stage-prev') this.send({ t: 'stage', delta: -1 })

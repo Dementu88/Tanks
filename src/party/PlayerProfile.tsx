@@ -81,10 +81,13 @@ export function PlayerPicker({ room, slot }: { room: PartyRoomState; slot: numbe
   }
   const me = players.find((p) => p.id === mine)
   const stats = room.padStats?.[slot]
-  const nextLogo = () => {
+  const stepLogo = (delta: number) => {
     if (me == null) return
-    const i = LOGOS.findIndex((l) => l.id === me.logo)
-    sendParty({ t: 'player-logo', logo: LOGOS[(i + 1) % LOGOS.length].id })
+    const i = Math.max(
+      0,
+      LOGOS.findIndex((l) => l.id === me.logo),
+    )
+    sendParty({ t: 'player-logo', logo: LOGOS[(i + delta + LOGOS.length) % LOGOS.length].id })
   }
   return (
     <div className="pad-player-pick">
@@ -96,16 +99,26 @@ export function PlayerPicker({ room, slot }: { room: PartyRoomState; slot: numbe
       >
         <Chevron left />
       </button>
-      <button
-        type="button"
-        className="hud-btn pad-player-name"
-        aria-label={me != null ? 'Zmień logo' : 'Gość'}
-        onClick={nextLogo}
-        disabled={me == null}
-      >
+      <div className="hud-btn pad-player-name">
         {me != null && (
           <>
+            <button
+              type="button"
+              className="pad-logo-step"
+              aria-label="Poprzedni awatar"
+              onClick={() => stepLogo(-1)}
+            >
+              <Chevron left />
+            </button>
             <LogoCircle logo={me.logo} size={30} />
+            <button
+              type="button"
+              className="pad-logo-step"
+              aria-label="Następny awatar"
+              onClick={() => stepLogo(1)}
+            >
+              <Chevron />
+            </button>
             <RankCircle xp={me.xp} size={30} />
           </>
         )}
@@ -113,7 +126,7 @@ export function PlayerPicker({ room, slot }: { room: PartyRoomState; slot: numbe
           {me?.name.toUpperCase() ?? 'GOŚĆ'}
           {me != null && <small>{rankProgress(me.xp).rank.nazwa}</small>}
         </span>
-      </button>
+      </div>
       <button
         type="button"
         className="hud-btn icon"
