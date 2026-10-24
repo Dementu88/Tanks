@@ -51,4 +51,29 @@ describe('do 4 graczy', () => {
         session.scene!.tanks.filter((t) => t.side === 'bot').length,
     ).toBeGreaterThan(30)
   })
+
+  it('start każdego gracza jest czyszczony z cegieł, także przy odrodzeniu', () => {
+    const bricksAt = (map: { brickIndicesIn: Function; bricks: boolean[] }, i: number) =>
+      (map.brickIndicesIn({ ...PLAYER_SPAWNS[i], width: 15, height: 15 }) as number[]).filter(
+        (k) => map.bricks[k],
+      ).length
+    // cegły pod graczami 1 i 2 (wiersz 12, kolumny 4 i 8)
+    const stage = makeStage('t', ['20*basic'], { '12,4': 'Bf', '12,8': 'Bf' })
+    const { session, run } = setup([stage], players(2))
+    runUntilPlaying(session, run)
+    runUntilSpawned(session, run)
+    const scene = session.scene!
+    expect(bricksAt(scene.map, 0)).toBe(0)
+    expect(bricksAt(scene.map, 1)).toBe(0)
+    // gracz 1 odjeżdża, ktoś stawia cegły na jego starcie, gracz ginie i odradza się
+    const indices = scene.map.brickIndicesIn({ ...PLAYER_SPAWNS[0], width: 15, height: 15 })
+    for (const k of indices) scene.map.bricks[k] = true
+    const tank = scene.tanks.find((t) => t.side === 'player' && t.color === 'yellow')!
+    tank.alive = false
+    ;(scene as unknown as { players: { tank: unknown; respawnTimer: number }[] }).players[0].tank =
+      null
+    ;(scene as unknown as { players: { respawnTimer: number }[] }).players[0].respawnTimer = 1
+    run(500)
+    expect(bricksAt(scene.map, 0)).toBe(0)
+  })
 })

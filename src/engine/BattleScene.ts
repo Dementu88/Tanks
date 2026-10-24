@@ -148,8 +148,9 @@ export default class BattleScene {
     this.killInfo = players.map(() => emptyCounts(0))
     const multi = players.length > 1
     this.maxBotsOnField = maxBotsOnField(players.length, options.difficulty)
-    // gracze 3 i 4 startują z boku — tam musi być wolna kratka (oryginalne plansze tego nie przewidują)
-    for (const state of players.slice(2)) {
+    // start każdego gracza musi być wolny (gracze 3 i 4 startują z boku — oryginalne plansze
+    // tego nie przewidują; losowe i edytowane plansze też mogą tam mieć cegły)
+    for (const state of players) {
       map.clearBlock(state.spawnPos.x, state.spawnPos.y)
     }
     this.botSpawnInterval =
@@ -245,6 +246,8 @@ export default class BattleScene {
     } else {
       return
     }
+    // przy odrodzeniu też: cegły pod startem usuwamy, żeby czołg nie utknął
+    this.map.clearBlock(state.spawnPos.x, state.spawnPos.y)
     const tank = new Tank({
       side: 'player',
       level,

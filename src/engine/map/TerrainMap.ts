@@ -193,13 +193,18 @@ export default class TerrainMap {
   }
 
   /** 摧毁老鹰 */
-  /** czyści całą kratkę 16×16 (start gracza 3/4 nie może wypaść w cegłach ani w wodzie) */
-  clearBlock(x: number, y: number): void {
+  /**
+   * czyści z kratki 16×16 to, co blokuje czołg: cegły, stal i wodę (start gracza);
+   * true, gdy coś tam było
+   */
+  clearBlock(x: number, y: number): boolean {
+    let changed = false
     const clear = (cells: boolean[], n: number, size: number) => {
       for (let row = Math.floor(y / size); row < Math.ceil((y + 16) / size); row += 1) {
         for (let col = Math.floor(x / size); col < Math.ceil((x + 16) / size); col += 1) {
-          if (row >= 0 && row < cells.length / n && col >= 0 && col < n) {
+          if (row >= 0 && row < cells.length / n && col >= 0 && col < n && cells[row * n + col]) {
             cells[row * n + col] = false
+            changed = true
           }
         }
       }
@@ -207,9 +212,9 @@ export default class TerrainMap {
     clear(this.bricks, N_MAP.BRICK, ITEM_SIZE_MAP.BRICK)
     clear(this.steels, N_MAP.STEEL, ITEM_SIZE_MAP.STEEL)
     clear(this.rivers, N_MAP.RIVER, ITEM_SIZE_MAP.RIVER)
-    clear(this.snows, N_MAP.SNOW, ITEM_SIZE_MAP.SNOW)
-    clear(this.forests, N_MAP.FOREST, ITEM_SIZE_MAP.FOREST)
-    this.version += 1
+    // lód i las zostają — nie blokują czołgu
+    if (changed) this.version += 1
+    return changed
   }
 
   destroyEagle(): void {
