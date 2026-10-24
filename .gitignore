@@ -13,3 +13,6 @@ deploy
 __pycache__/
 *.pyc
 *.log
+data/
+ZADANIE_*.md
+RAPORT_*.md

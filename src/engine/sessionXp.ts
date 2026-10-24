@@ -122,6 +122,25 @@ export class SessionXp {
     earned: 0,
     levels: { ...GAMEPLAY.xpStartLevels },
   }
+  /**
+   * Przywraca zapisany postęp profilu (pula, zdobyte XP, poziomy cech, ustawienia).
+   * Nieznane albo złe pola są pomijane — zostaje to, co było.
+   */
+  restore(saved: unknown): void {
+    if (saved == null || typeof saved !== 'object') return
+    const s = saved as Partial<XpState>
+    const count = (v: unknown) =>
+      typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null
+    const config = parseXpConfig(s.config)
+    if (config != null) this.state.config = config
+    this.state.bank = count(s.bank) ?? this.state.bank
+    this.state.earned = count(s.earned) ?? this.state.earned
+    for (const trait of XP_TRAITS) {
+      const level = count(s.levels?.[trait])
+      if (level != null) this.state.levels[trait] = Math.min(level, this.state.maxLevel)
+    }
+  }
+
   snapshot(): XpState {
     return {
       ...this.state,

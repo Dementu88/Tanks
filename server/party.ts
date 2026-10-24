@@ -11,7 +11,7 @@ import {
 import { STEP_MS } from '../src/engine/Game'
 import { alignTurn, validTurnSnap } from '../src/engine/physics/turnAlignment'
 import { isPerpendicular } from '../src/engine/physics/geometry'
-import { SessionXp } from '../src/engine/sessionXp'
+import { Profiles, type RecordMode } from './profiles'
 import GameSession, { type PlayerConfig } from '../src/engine/GameSession'
 import type { StatisticsView } from '../src/engine/StatisticsAnimation'
 import type { GameEvent } from '../src/engine/events'
@@ -123,6 +123,8 @@ interface Room {
   stageIndex: number
   /** poziom trudności wybrany przez pierwszego gracza */
   difficulty: number
+  /** losowe plansze: start od rekordu profilu (true) albo od początku */
+  fromRecord: boolean
   game: RunningGame | null
   paused: boolean
   lastResult: LanResult | null
@@ -171,6 +173,8 @@ export interface PartyServerOptions {
     saveStats: (stats: PlayerLevelStats[]) => Promise<void>
     loadStats: () => Promise<PlayerLevelStats[] | null>
   }
+  /** profile drużyny z zapisem postępu; brak = profile z configu, tylko w pamięci */
+  profiles?: Profiles
 }
 
 const digest = (text: string) => createHash('sha256').update(text).digest()
@@ -184,6 +188,7 @@ export function createPartyServer({
   maxConnections = DEFAULT_MAX_CONNECTIONS,
   onGameEvent,
   dev,
+  profiles = new Profiles(),
 }: PartyServerOptions = {}) {
   const wss = new WebSocketServer({
     noServer: true,
@@ -191,8 +196,13 @@ export function createPartyServer({
     perMessageDeflate: { threshold: 0 },
   })
   const rooms = new Map<string, Room>()
-  // Postęp należy do procesu serwera, także po zakończeniu gry i usunięciu pustego pokoju.
-  const xp = new SessionXp()
+  // Postęp należy do wybranego profilu (XP, bonusy, rekord) i zapisuje się sam.
+  const modeOf = (stageIndex: number, cols: number): RecordMode =>
+    stageIndex >= 0 && cols === FIELD_BLOCK_SIZE
+      ? 'classic'
+      : cols > FIELD_BLOCK_SIZE
+        ? 'wide'
+        : 'random'
   const memberOf = new Map<WebSocket, Room>()
 
   const newCode = (): string | null => {
@@ -212,8 +222,9 @@ export function createPartyServer({
       code,
       tvs: new Set(),
       pads: new Array<Pad | null>(PAD_SLOTS).fill(null),
-      stageIndex: 0,
+      stageIndex: Math.min(profiles.record.classic, stages.length - 1),
       difficulty: DEFAULT_DIFFICULTY,
+      fromRecord: true,
       game: null,
       paused: false,
       lastResult: null,
@@ -252,7 +263,13 @@ export function createPartyServer({
     difficulty: room.difficulty,
     difficultyNames: DIFFICULTY_LEVELS.map((d) => d.nazwa),
     difficultyChooser: difficultyChooser(room),
-    xp: xp.snapshot(),
+    xp: profiles.xp.snapshot(),
+    profile: {
+      name: profiles.current,
+      names: [...profiles.names],
+      record: profiles.record,
+      fromRecord: room.fromRecord,
+    },
   })
 
   const broadcastRoom = (room: Room) => {
@@ -282,14 +299,23 @@ export function createPartyServer({
     // plansza -1 = losowe: cała seria nowych, wylosowanych plansz (R1, R2…)
     const random = room.stageIndex < 0
     const list = random ? randomCampaign(stages.length, Math.random, cols) : stages
-    const session = new GameSession(list, random ? 0 : room.stageIndex, players, audio, {
+    // losowe: od rekordu profilu (kontynuacja), chyba że wybrano „od początku”
+    const start = random
+      ? room.fromRecord
+        ? Math.min(profiles.record[modeOf(room.stageIndex, cols)], list.length - 1)
+        : 0
+      : room.stageIndex
+    const session = new GameSession(list, start, players, audio, {
       autopilot: false,
       random: Math.random,
       difficulty: room.difficulty,
-      sessionBonuses: () => xp.bonuses(),
+      sessionBonuses: () => profiles.xp.bonuses(),
       events: {
         emit: (event) => {
-          if (xp.record(event)) broadcastRoom(room)
+          if (profiles.xp.record(event)) {
+            profiles.changed()
+            broadcastRoom(room)
+          }
           try {
             onGameEvent?.(event)
           } catch (err) {
@@ -388,6 +414,8 @@ export function createPartyServer({
       broadcastFrame(room, game)
     }
     const s = game.session
+    // rekord profilu: najdalsza plansza w tym trybie
+    if (profiles.reached(modeOf(game.random ? -1 : 0, game.cols), s.stageIndex)) broadcastRoom(room)
     if (s.phase === 'ended') {
       stopGame(room, { stageName: s.stage.name, scores: s.scores, cleared: s.cleared })
     }
@@ -699,14 +727,34 @@ export function createPartyServer({
 
     if (room == null) return
     const pad = room.pads.find((p) => p?.ws === ws)
+    if (msg.t === 'profile' || msg.t === 'from-record') {
+      // profil wybiera wspólny ekran albo pierwszy gracz, tylko w lobby
+      const manager =
+        room.tvs.has(ws) || (pad != null && room.pads.indexOf(pad) === difficultyChooser(room))
+      if (!manager || room.game != null) return
+      if (msg.t === 'profile') {
+        profiles.step(Number(msg.delta))
+        // wczytanie rekordu: plansze z gry startują od najdalszej osiągniętej
+        if (room.stageIndex >= 0) {
+          room.stageIndex = Math.min(profiles.record.classic, stages.length - 1)
+        }
+      } else {
+        room.fromRecord = msg.on === true
+      }
+      broadcastRoom(room)
+      return
+    }
     if (msg.t === 'xp-config' || msg.t === 'xp-buy') {
       // Wspólny ekran albo pierwszy gracz zarządza wspólną pulą.
       const manager =
         room.tvs.has(ws) || (pad != null && room.pads.indexOf(pad) === difficultyChooser(room))
       if (!manager) return
       const changed =
-        msg.t === 'xp-config' ? room.game == null && xp.configure(msg.config) : xp.buy(msg.trait)
+        msg.t === 'xp-config'
+          ? room.game == null && profiles.xp.configure(msg.config)
+          : profiles.xp.buy(msg.trait)
       if (changed) {
+        profiles.changed()
         room.game?.session.scene?.refreshSessionBonuses()
         broadcastRoom(room)
         if (room.game != null) broadcastFrame(room, room.game)
@@ -851,6 +899,8 @@ export function createPartyServer({
     },
     rooms: () => rooms.size,
     close() {
+      void profiles.flush()
+      profiles.dispose()
       clearInterval(loop)
       clearInterval(heartbeat)
       if (devTimer !== 0) clearInterval(devTimer)

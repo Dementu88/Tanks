@@ -30,7 +30,11 @@ body.party-pad {
 .tv-volume .tv-toggle {
   text-transform: none;
 }
-.tv-volume .tv-toggle:focus-visible {
+.tv-volume .tv-profile {
+  color: #fff;
+  font-size: 3vh;
+}
+.tv-toggle:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
 }

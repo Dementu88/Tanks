@@ -130,3 +130,17 @@ Wystarczy link do TV (`/tv`, na serwerze z kluczem `?k=…`). Na każdym urządz
   zeskanować QR z ekranu.
 
 `#/pc` dalej działa: to ten sam ekran, z klawiaturą, dopóki nie przełączysz na „tylko TV”.
+
+## Profile drużyny
+
+Profil to wspólny zapis drużyny: XP z kupionymi bonusami i rekord, czyli najdalsza plansza,
+osobno dla plansz z gry, losowych i szerokich. Pierwszy profil to **TankMonsters**.
+
+- Wybór: w lobby strzałki przy „Profil” na ekranie TV/PC albo MENU Gracza 1 → PROFIL.
+- Po wyborze wczytuje się postęp profilu. Plansze z gry ustawiają się na rekord, a losowe
+  i szerokie startują od rekordu; przełącznik „Start od rekordu / od początku” to zmienia.
+- Postęp zapisuje się sam, chwilę po każdej zmianie i przy zamykaniu serwera, do
+  `data/profile-postep.json` lokalnie albo do `PARTY_DATA_DIR` na serwerze.
+- Nowy profil: `aktualizuj_serwer.bat` → 7 „Dodaj profil drużyny”, potem 1 (Aktualizuj grę).
+  Lista profili leży w `config/profile.json`.
+- XP jest domyślnie włączone (`config/rozgrywka.json` → `xp.enabled`).

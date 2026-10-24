@@ -27,11 +27,13 @@ import {
   partyKey,
   partyMirror,
   rememberPartyKey,
+  sendParty,
   usePartyStore,
 } from './client'
 import { attachKeyboard, watchGamepads } from './controls'
 import { LocalPad, type LocalPadState } from './localPad'
 import { WIDE_STAGE, type PartyRoomState } from './protocol'
+import { hasRecordStart, recordStage } from './profileView'
 import { PlayerBadge, useBodyClass } from './shared'
 import './party.css'
 
@@ -486,6 +488,51 @@ function TvLobby({
               Poziom trudności: <b>{room.difficultyNames[room.difficulty]}</b>
               {room.difficultyChooser != null && ` (wybiera Gracz ${room.difficultyChooser + 1})`}
             </p>
+          )}
+          {room.profile != null && (
+            <div className="tv-controls">
+              <span className="tv-label">Profil:</span>
+              <button
+                type="button"
+                className="tv-toggle"
+                aria-label="Poprzedni profil"
+                onClick={(e) => {
+                  sendParty({ t: 'profile', delta: -1 })
+                  e.currentTarget.blur()
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" strokeWidth="3" />
+                </svg>
+              </button>
+              <b className="tv-profile">{room.profile.name}</b>
+              <button
+                type="button"
+                className="tv-toggle"
+                aria-label="Następny profil"
+                onClick={(e) => {
+                  sendParty({ t: 'profile', delta: 1 })
+                  e.currentTarget.blur()
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" strokeWidth="3" />
+                </svg>
+              </button>
+              <span className="tv-muted">rekord: plansza {recordStage(room)}</span>
+              {hasRecordStart(room) && (
+                <button
+                  type="button"
+                  className={room.profile.fromRecord ? 'tv-toggle on' : 'tv-toggle'}
+                  onClick={(e) => {
+                    sendParty({ t: 'from-record', on: !room.profile!.fromRecord })
+                    e.currentTarget.blur()
+                  }}
+                >
+                  {room.profile.fromRecord ? 'Start od rekordu' : 'Start od początku'}
+                </button>
+              )}
+            </div>
           )}
           {result != null && (
             <p className="tv-result">

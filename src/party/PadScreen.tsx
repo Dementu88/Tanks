@@ -26,6 +26,7 @@ import {
   type PadInput,
 } from './controls'
 import { PAD_SLOTS, WIDE_STAGE, type PartyRoomState } from './protocol'
+import { hasRecordStart, recordStage } from './profileView'
 import { useBodyClass } from './shared'
 import '@fontsource/orbitron/500.css'
 import '@fontsource/orbitron/700.css'
@@ -706,6 +707,27 @@ function HostMenu({ room, onClose }: { room: PartyRoomState; onClose: (resume: b
     <div className="pad-menu" onClick={() => onClose(true)}>
       <div className="pad-menu-panel" onClick={(e) => e.stopPropagation()}>
         <div className="pad-menu-title">MENU</div>
+        {!playing && room.profile != null && (
+          <>
+            <MenuStepper
+              label="PROFIL"
+              value={room.profile.name.toUpperCase()}
+              onStep={(delta) => sendParty({ t: 'profile', delta })}
+              note={`rekord: plansza ${recordStage(room)}`}
+            />
+            {hasRecordStart(room) && (
+              <div className="pad-menu-row">
+                <span className="pad-menu-label">START</span>
+                <HudButton
+                  active={room.profile.fromRecord}
+                  onClick={() => sendParty({ t: 'from-record', on: !room.profile!.fromRecord })}
+                >
+                  {room.profile.fromRecord ? `OD REKORDU (${recordStage(room)})` : 'OD POCZĄTKU'}
+                </HudButton>
+              </div>
+            )}
+          </>
+        )}
         {!playing && (
           <MenuStepper
             label="PLANSZA"

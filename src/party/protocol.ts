@@ -53,6 +53,15 @@ export interface PartyRoomState {
   /** slot, który wybiera poziom (pierwszy podłączony gracz); null = nikt */
   difficultyChooser: number | null
   xp?: XpState
+  /** profil drużyny: postęp XP i rekord zapisują się sam */
+  profile?: {
+    name: string
+    names: string[]
+    /** najdalsza plansza (indeks od 0): plansze z gry, losowe, szerokie */
+    record: { classic: number; random: number; wide: number }
+    /** losowe plansze startują od rekordu */
+    fromRecord: boolean
+  }
 }
 
 /** serwer → klient */
@@ -95,6 +104,10 @@ export type PartyClientMessage =
   | { t: 'stage'; delta: number }
   /** poprzedni / następny poziom trudności — tylko pierwszy gracz; w grze działa od restartu */
   | { t: 'difficulty'; delta: number }
+  /** poprzedni / następny profil drużyny (pierwszy gracz albo ekran, w lobby) */
+  | { t: 'profile'; delta: number }
+  /** losowe plansze od rekordu profilu albo od początku */
+  | { t: 'from-record'; on: boolean }
   /** restart bieżącej gry — tylko pierwszy gracz (menu) */
   | { t: 'restart' }
   | { t: 'pause' }

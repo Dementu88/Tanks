@@ -6,6 +6,7 @@ import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { setPlayerStatsTable, type PlayerLevelStats } from '../src/engine/tankStats'
 import { createPartyServer } from './party'
+import { fileStore, Profiles } from './profiles'
 import { GAMEPLAY } from '../src/engine/gameplayConfig'
 import { DEFAULT_XP_CONFIG } from '../src/engine/sessionXp'
 import { createControlLabRelay } from './controlLab'
@@ -133,8 +134,18 @@ try {
 } catch {
   // brak pliku — zostają wartości wbudowane
 }
+/**
+ * Postęp profili (XP, bonusy, rekord). PARTY_DATA_DIR na serwerze (katalog zapisywalny przez
+ * usługę, poza paczką aktualizacji); lokalnie data/ obok dist-server.
+ */
+const DATA_DIR =
+  process.env.PARTY_DATA_DIR?.trim() || fileURLToPath(new URL('../data/', import.meta.url))
+const PROFILE_FILE = join(DATA_DIR, 'profile-postep.json')
+const profiles = new Profiles(undefined, fileStore(PROFILE_FILE))
+
 const party = createPartyServer({
   key,
+  profiles,
   dev: devMode ? { saveStats: saveStatsFile, loadStats: loadStatsFile } : undefined,
   // na razie tylko dziennik (journalctl); profile i osiągnięcia podepną się w tym miejscu
   onGameEvent: (event) => {
@@ -201,15 +212,20 @@ server.on('upgrade', (req, socket, head) => {
   socket.destroy()
 })
 server.on('close', () => lab?.close())
-server.listen(port, '::', () => {
-  const link = `http://localhost:${port}/#/tv${key == null ? '' : '?k=<PARTY_KEY>'}`
-  console.log(`Battle City party: ${link}  (telefony skanują kod QR z TV)`)
-  if (key == null) console.warn('UWAGA: brak PARTY_KEY — gra otwarta dla każdego, kto zna adres')
-})
+// najpierw wczytujemy postęp profili, potem przyjmujemy graczy
+void profiles.ready.then(() =>
+  server.listen(port, '::', () => {
+    console.log(`[profile] ${profiles.names.join(', ')} · postęp: ${PROFILE_FILE}`)
+    const link = `http://localhost:${port}/#/tv${key == null ? '' : '?k=<PARTY_KEY>'}`
+    console.log(`Battle City party: ${link}  (telefony skanują kod QR z TV)`)
+    if (key == null) console.warn('UWAGA: brak PARTY_KEY — gra otwarta dla każdego, kto zna adres')
+  }),
+)
 
 const shutdown = () => {
   party.close()
-  server.close(() => process.exit(0))
+  // postęp profili zapisujemy przed wyjściem
+  void profiles.flush().finally(() => server.close(() => process.exit(0)))
 }
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)

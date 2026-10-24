@@ -16,6 +16,7 @@ import { bulletInterval, bulletSpeed, moveSpeed } from '../src/engine/values'
 import { SceneEncoder, SceneMirror } from '../src/lan/frame'
 import { tankColor } from '../src/render/tankColor'
 import { P1, P2, makeStage, runUntilPlaying, runUntilSpawned } from './helpers'
+import { GAMEPLAY } from '../src/engine/gameplayConfig'
 
 const kill: GameEvent = {
   type: 'bot_killed',
@@ -26,6 +27,8 @@ const kill: GameEvent = {
   by: 'grenade',
 }
 const config = { ...DEFAULT_XP_CONFIG, enabled: true, costs: { speed: 100, fire: 100, armor: 100 } }
+/** XP za opancerzonego wroga z config/rozgrywka.json */
+const R = GAMEPLAY.xpKillRewards.armor
 function funded() {
   const xp = new SessionXp()
   xp.configure(config)
@@ -37,11 +40,13 @@ describe('wspólny XP sesji', () => {
     const large = { ...config, costs: { speed: 10000, fire: 10000, armor: 15000 } }
     const xp = new SessionXp()
     expect(xp.configure(large)).toBe(true)
-    for (let i = 0; i < 37; i++) xp.record(kill)
+    // ile opancerzonych wrogów trzeba na LV1 pancerza przy nagrodzie z configu
+    const kills = Math.ceil(15000 / R)
+    for (let i = 0; i < kills - 1; i++) xp.record(kill)
     expect(xp.buy('armor')).toBe(false)
     xp.record(kill)
     expect(xp.buy('armor')).toBe(true)
-    expect(xp.snapshot().bank).toBe(200)
+    expect(xp.snapshot().bank).toBe(kills * R - 15000)
     expect(xpCost(xp.snapshot(), 'armor')).toBe(30000)
     expect(
       parseXpConfig({ ...large, costs: { speed: 1, fire: 12345, armor: 1000000 } }),
@@ -52,12 +57,14 @@ describe('wspólny XP sesji', () => {
       expect(xpConfigError(invalid)).toContain('xp.costs.armor')
     }
   })
-  it('domyślnie klasyczny; granat daje XP, zakup wybranej cechy ma rosnący koszt i limit 3', () => {
+  it('wyłączone XP nic nie daje; granat daje XP, zakup ma rosnący koszt i limit 3', () => {
     const xp = new SessionXp()
+    xp.configure({ ...config, enabled: false })
     expect(xp.record(kill)).toBe(false)
-    xp.configure(config)
+    // ceny tak, żeby jedno zestrzelenie wystarczyło na LV1 + LV2 (jak przy 400 XP i cenie 100)
+    xp.configure({ ...config, costs: { ...config.costs, speed: R / 4 } })
     xp.record(kill)
-    expect(xp.snapshot().bank).toBe(400)
+    expect(xp.snapshot().bank).toBe(R)
     expect(xp.buy('speed')).toBe(true)
     expect(xp.buy('speed')).toBe(true)
     expect(xp.buy('speed')).toBe(false)
@@ -65,8 +72,8 @@ describe('wspólny XP sesji', () => {
     xp.record(kill)
     expect(xp.buy('speed')).toBe(true)
     expect(xp.buy('speed')).toBe(false)
-    expect(xp.snapshot().bank).toBe(200)
-    expect(xp.snapshot().earned).toBe(800)
+    expect(xp.snapshot().bank).toBe(R / 2)
+    expect(xp.snapshot().earned).toBe(2 * R)
     expect(xp.buy('toString')).toBe(false)
   })
   it('wyłączenie zawiesza XP i premie, włączenie przywraca; nowy serwer zaczyna od zera', () => {

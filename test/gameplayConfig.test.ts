@@ -79,6 +79,7 @@ it('ustawienia z pliku zmieniają start i odrodzenie, tarcze, poziomy początkow
         maxLevel: 5,
         startLevels: { speed: 1, fire: 0, armor: 2 },
         costs: { speed: 100, fire: 100, armor: 100 },
+        killRewards: { basic: 100, fast: 200, power: 300, armor: 400 },
       },
     },
   }))

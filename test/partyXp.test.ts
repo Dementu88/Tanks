@@ -58,14 +58,16 @@ it('XP serwera: wspólna pula, uprawnienia, zakup podczas pauzy, restart i klasy
     const config = {
       ...DEFAULT_XP_CONFIG,
       enabled: true,
-      costs: { speed: 100, fire: 100, armor: 100 },
+      // pancerz tani, żeby wystarczył jeden wróg z granatu przy nagrodzie z configu
+      costs: { speed: 100, fire: 100, armor: 10 },
     }
     p2.send({ t: 'xp-config', config })
     await settle()
-    expect(tv.room()!.xp!.config.enabled).toBe(false)
+    // drugi gracz nie zarządza pulą — ceny zostają z configu
+    expect(tv.room()!.xp!.config.costs.speed).toBe(DEFAULT_XP_CONFIG.costs.speed)
     // Ekran pozwala ustawić XP również wtedy, gdy gracze mają tylko sprzętowe pady.
     tv.send({ t: 'xp-config', config })
-    await wait(() => tv.room()!.xp!.config.enabled)
+    await wait(() => tv.room()!.xp!.config.costs.speed === 100)
     p1.send({ t: 'start' })
     tv.send({ t: 'dev', action: { a: 'freeze-bots', on: true } })
     await wait(
@@ -75,7 +77,7 @@ it('XP serwera: wspólna pula, uprawnienia, zakup podczas pauzy, restart i klasy
     )
     p1.send({ t: 'xp-config', config: { ...config, enabled: false } })
     tv.send({ t: 'dev', action: { a: 'powerup', slot: 0, name: 'grenade' } })
-    await wait(() => tv.room()!.xp!.bank >= 100)
+    await wait(() => tv.room()!.xp!.bank >= 10)
     p1.send({ t: 'pause' })
     await wait(() => tv.room()!.paused)
     const bank = tv.room()!.xp!.bank
@@ -91,7 +93,7 @@ it('XP serwera: wspólna pula, uprawnienia, zakup podczas pauzy, restart i klasy
         .tanks.filter((t) => t[1] === 0)
         .every((t) => t[8] === 2 && t[11] === 2),
     )
-    expect(p2.room()!.xp!.bank).toBe(bank - 100)
+    expect(p2.room()!.xp!.bank).toBe(bank - 10)
     p1.send({ t: 'restart' })
     await wait(() => !tv.room()!.paused)
     await wait(() => tv.scene()?.tanks.filter((t) => t[1] === 0).length === 2)
@@ -117,7 +119,7 @@ it('XP serwera: wspólna pula, uprawnienia, zakup podczas pauzy, restart i klasy
           .every((t) => t[8] === 1),
     )
     expect(tv.room()!.xp!.levels.armor).toBe(1)
-    expect(tv.room()!.xp!.bank).toBe(bank - 100)
+    expect(tv.room()!.xp!.bank).toBe(bank - 10)
     const otherTv = await connect()
     otherTv.send({ t: 'tv' })
     await wait(() => otherTv.room() != null)

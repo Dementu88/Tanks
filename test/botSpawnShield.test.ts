@@ -3,17 +3,20 @@ import Bullet from '../src/engine/entities/Bullet'
 import type Tank from '../src/engine/entities/Tank'
 import { updateBullets, type BulletTankHit } from '../src/engine/systems/bullet'
 import { makeStage, runUntilPlaying, runUntilSpawned, setup } from './helpers'
+import { GAMEPLAY } from '../src/engine/gameplayConfig'
 
 describe('tarcza odrodzenia wroga', () => {
-  it.each([false, true])('chroni przez 3 sekundy po animacji, zamrożenie: %s', (frozen) => {
+  it.each([false, true])('chroni przez czas z configu po animacji, zamrożenie: %s', (frozen) => {
     const { session, run, input } = setup([makeStage('shield', ['1*armor'])])
     runUntilPlaying(session, run)
     const scene = session.scene!
     run(500)
-    expect(scene.flickers.find((f) => f.tank.side === 'bot')!.tank.helmetDuration).toBe(3000)
+    expect(scene.flickers.find((f) => f.tank.side === 'bot')!.tank.helmetDuration).toBe(
+      GAMEPLAY.enemySpawnShieldMs,
+    )
     runUntilSpawned(session, run)
     const bot = scene.tanks.find((t) => t.side === 'bot')!
-    expect(bot.helmetDuration).toBe(3000)
+    expect(bot.helmetDuration).toBe(GAMEPLAY.enemySpawnShieldMs)
     scene.devFreezeBots(frozen)
 
     const shoot = (target: Tank) => {
@@ -34,7 +37,7 @@ describe('tarcza odrodzenia wroga', () => {
       return hits
     }
     expect(shoot(bot)).toHaveLength(0)
-    for (let elapsed = 0; elapsed < 2990; elapsed += 10) {
+    for (let elapsed = 0; elapsed < GAMEPLAY.enemySpawnShieldMs - 10; elapsed += 10) {
       scene.step(10, input)
       scene.bullets.length = 0
     }

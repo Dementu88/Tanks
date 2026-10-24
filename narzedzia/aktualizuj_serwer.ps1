@@ -5,7 +5,10 @@
 #   -Online        wlacza gre (usluga startuje, takze po restarcie serwera)
 #   -Offline       wylacza gre (usluga stoi, takze po restarcie serwera)
 #   -Status        pokazuje stan gry na serwerze
-param([switch]$BezTestow, [switch]$TylkoPaczka, [switch]$Online, [switch]$Offline, [switch]$Status)
+#   -DodajProfil "Nazwa"   dopisuje profil druzyny do config\profile.json (potem Aktualizuj gre)
+#   -Profile       pokazuje liste profili
+param([switch]$BezTestow, [switch]$TylkoPaczka, [switch]$Online, [switch]$Offline, [switch]$Status,
+      [string]$DodajProfil = '', [switch]$Profile)
 
 $ErrorActionPreference = 'Stop'
 
@@ -91,6 +94,39 @@ function GraStatus {
     Serwer 'battle-city-status'
 }
 
+# ---- profile druzyny (config\profile.json; postep zapisuje sam serwer) ----
+$PlikProfili = Join-Path $Root 'config\profile.json'
+
+function CzytajProfile {
+    $dane = Get-Content -Raw -Encoding UTF8 $PlikProfili | ConvertFrom-Json
+    return $dane
+}
+function PokazProfile {
+    $dane = CzytajProfile
+    Krok 'Profile druzyny'
+    $i = 1
+    foreach ($n in $dane.profile) { Write-Host ("  {0}. {1}" -f $i, $n); $i++ }
+}
+function DodajProfil($nazwa) {
+    $nazwa = "$nazwa".Trim()
+    if ($nazwa -notmatch '^[\p{L}\p{N} _-]{1,24}$') {
+        throw 'Nazwa profilu: 1-24 znaki (litery, cyfry, spacja, - lub _)'
+    }
+    $dane = CzytajProfile
+    $lista = @($dane.profile)
+    if ($lista -contains $nazwa) {
+        Write-Host "Profil '$nazwa' juz jest." -ForegroundColor Yellow
+        return
+    }
+    $dane.profile = @($lista + $nazwa)
+    $json = $dane | ConvertTo-Json -Depth 5
+    [System.IO.File]::WriteAllText($PlikProfili, $json + "`n", (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "Dodano profil '$nazwa'." -ForegroundColor Green
+    Write-Host 'Lokalnie: uruchom_lokalnie.bat. Na serwer: opcja 1 (Aktualizuj gre).' -ForegroundColor Green
+}
+
+if ($Profile) { PokazProfile; exit 0 }
+if ($DodajProfil -ne '') { DodajProfil $DodajProfil; exit 0 }
 if ($Online) { GraOnline; exit 0 }
 if ($Offline) { GraOffline; exit 0 }
 if ($Status) { GraStatus; exit 0 }
@@ -105,6 +141,8 @@ while ($true) {
     Write-Host '  4  Wylacz gre (OFFLINE)'
     Write-Host '  5  Stan gry'
     Write-Host '  6  Tylko zbuduj paczke'
+    Write-Host '  7  Dodaj profil druzyny'
+    Write-Host '  8  Lista profili'
     Write-Host '  0  Wyjscie'
     $wybor = Read-Host 'Wybierz'
     try {
@@ -115,6 +153,8 @@ while ($true) {
             '4' { GraOffline }
             '5' { GraStatus }
             '6' { Aktualizuj $false $true }
+            '7' { DodajProfil (Read-Host 'Nazwa nowego profilu') }
+            '8' { PokazProfile }
             '0' { exit 0 }
             default { Write-Host 'Nieznana opcja' -ForegroundColor Yellow }
         }
