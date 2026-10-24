@@ -54,7 +54,15 @@ export type TankTuple = [
 ]
 export type BulletTuple = [id: number, x: number, y: number]
 export type ExplosionTuple = [id: number, cx: number, cy: number, shape: ExplosionShape]
-export type PowerUpTuple = [id: number, name: PowerUpName, x: number, y: number, visible: 0 | 1]
+export type PowerUpTuple = [
+  id: number,
+  name: PowerUpName,
+  x: number,
+  y: number,
+  visible: 0 | 1,
+  /** ukryta w cegłach (mała, pod murem); brak = zwykła */
+  hidden?: 0 | 1,
+]
 export type FlickerTuple = [id: number, x: number, y: number, shape: FlickerShape]
 export type ScorePopupTuple = [id: number, score: number, x: number, y: number, visible: 0 | 1]
 
@@ -169,7 +177,14 @@ export class SceneEncoder {
         ),
       bullets: scene.bullets.map((b) => [b.bulletId, r2(b.x), r2(b.y)]),
       explosions: scene.explosions.map((e) => [e.id, r2(e.cx), r2(e.cy), e.shape()]),
-      powerUps: scene.powerUps.map((p) => [p.id, p.name, r2(p.x), r2(p.y), p.visible ? 1 : 0]),
+      powerUps: scene.powerUps.map((p) => [
+        p.id,
+        p.name,
+        r2(p.x),
+        r2(p.y),
+        p.visible ? 1 : 0,
+        p.hidden ? 1 : 0,
+      ]),
       flickers: scene.flickers.map((f) => [f.id, r2(f.x), r2(f.y), f.shape()]),
       scorePopups: scene.scorePopups.map((p) => [
         p.id,
@@ -279,12 +294,13 @@ export class SceneMirror {
       cy,
       shape: () => shape,
     }))
-    this.powerUps = frame.powerUps.map(([id, name, x, y, visible]) => ({
+    this.powerUps = frame.powerUps.map(([id, name, x, y, visible, hidden]) => ({
       id,
       name,
       x,
       y,
       visible: visible === 1,
+      hidden: hidden === 1,
     }))
     this.flickers = frame.flickers.map(([id, x, y, shape]) => ({ id, x, y, shape: () => shape }))
     this.scorePopups = frame.scorePopups.map(([id, score, x, y, visible]) => ({

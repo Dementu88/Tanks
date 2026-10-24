@@ -58,6 +58,10 @@ export type PlayerConfig = Pick<PlayerState, 'control' | 'color' | 'spawnPos'> &
 /** 开局时确定、整局不变的选项；GameSession 原样传给每一关的 BattleScene */
 export interface SessionOptions {
   sessionBonuses?: () => SessionBonuses
+  /** szansa (0–1) na ukrytą gwiazdkę pod cegłami na każdej planszy; brak = 0 */
+  hiddenStarChance?: number
+  /** o ile ms dłużej trwa plansza po zabiciu ostatniego wroga; brak = 0 */
+  stageEndExtraMs?: number
   /** poligon: własny obszar niszczenia pocisku (px); brak / null = jak w oryginale */
   bulletDamage?: () => BulletDamage | null
   /** Options 页的托管开关；false 时不计空闲、不托管 */
@@ -283,7 +287,7 @@ export default class GameSession {
         this.stageEndAutopilot = this.players.map((p) => p.pilot === 'autopilot')
       }
       if (scene.status === 'won') {
-        this.endingTimer = WON_DELAY
+        this.endingTimer = WON_DELAY + (this.options.stageEndExtraMs ?? 0)
       } else if (scene.status === 'lost') {
         if (scene.loseReason === 'eagle') {
           // 老鹰被毁：不结算，直接播放 GAME OVER

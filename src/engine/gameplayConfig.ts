@@ -6,9 +6,20 @@ const integer = (value: unknown, min: number, max: number, key: string): number 
   return value
 }
 
+const fraction = (value: unknown, key: string): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1)
+    throw new Error(`config/rozgrywka.json: ${key} musi być liczbą 0–1`)
+  return value
+}
+
 export function parseGameplayConfig(value: typeof raw) {
   const xpMaxLevel = integer(value.xp.maxLevel, 1, 10, 'xp.maxLevel')
+  const extra = value as { hiddenStarChance?: unknown; stageEndExtraMs?: unknown }
   return {
+    /** szansa na ukrytą gwiazdkę pod cegłami (brak w pliku = 0) */
+    hiddenStarChance: fraction(extra.hiddenStarChance ?? 0, 'hiddenStarChance'),
+    /** dodatkowy czas planszy po zabiciu ostatniego wroga (ms) */
+    stageEndExtraMs: integer(extra.stageEndExtraMs ?? 0, 0, 60000, 'stageEndExtraMs'),
     playerStartRank: integer(value.playerStartRank, 1, 5, 'playerStartRank'),
     playerSpawnShieldMs: integer(value.playerSpawnShieldMs, 0, 60000, 'playerSpawnShieldMs'),
     enemySpawnShieldMs: integer(value.enemySpawnShieldMs, 0, 60000, 'enemySpawnShieldMs'),

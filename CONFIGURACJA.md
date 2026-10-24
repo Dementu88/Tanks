@@ -17,16 +17,18 @@ Sam zapis JSON nie zmienia już uruchomionej wersji produkcyjnej.
 | --- | --- | --- |
 | `playerStartRank` | `1` | poziom po nowym starcie i odrodzeniu, 1–5; przejście mapy zachowuje zdobyty poziom |
 | `playerSpawnShieldMs` | `2250` | tarcza gracza po animacji pojawiania się, 0–60000 ms |
-| `enemySpawnShieldMs` | `3000` | tarcza wroga po animacji pojawiania się, 0–60000 ms |
+| `enemySpawnShieldMs` | `1000` | tarcza wroga po animacji pojawiania się, 0–60000 ms |
 | `bonusShieldMs` | `10500` | czas tarczy z bonusu, 0–60000 ms |
-| `xp.enabled` | `false` | czy nowa sesja domyślnie włącza XP |
+| `hiddenStarChance` | `1` | szansa 0–1, że na planszy jest **ukryta gwiazdka**: mała (50%) gwiazdka pod cegłami w losowym pełnym bloku z dala od orła; widać ją po rozstrzelaniu muru, zbiera się jak zwykłą; nie miga i nie znika przy nowym bonusie |
+| `stageEndExtraMs` | `5000` | o ile ms dłużej trwa plansza po zabiciu ostatniego wroga (0–60000); czołgi dalej jeżdżą, można zebrać bonusy |
+| `xp.enabled` | `true` | czy nowa sesja domyślnie włącza XP |
 | `xp.maxLevel` | `3` | maksymalny poziom każdej cechy XP, 1–10 |
 | `xp.startLevels.speed/fire/armor` | `0` | początkowe ulepszenia nowej sesji, 0–maxLevel |
 | `xp.costs.speed/fire/armor` | `10000/10000/15000` | cena LV1, 1–1000000 XP; zakup poziomu N kosztuje N × tę cenę |
-| `xp.killRewards.basic` | `100` | XP za zwykłego wroga, 0–1000000 |
-| `xp.killRewards.fast` | `200` | XP za szybkiego wroga, 0–1000000 |
-| `xp.killRewards.power` | `300` | XP za wroga z mocnym działem, 0–1000000 |
-| `xp.killRewards.armor` | `400` | XP za opancerzonego wroga, 0–1000000 |
+| `xp.killRewards.basic` | `20` | XP za zwykłego wroga, 0–1000000 |
+| `xp.killRewards.fast` | `40` | XP za szybkiego wroga, 0–1000000 |
+| `xp.killRewards.power` | `60` | XP za wroga z mocnym działem, 0–1000000 |
+| `xp.killRewards.armor` | `80` | XP za opancerzonego wroga, 0–1000000 |
 | `xp.speedPercent` | `10` | dodatkowa szybkość na poziom, 5–50% |
 | `xp.firePercent` | `15` | dodatkowa szybkostrzelność na poziom, 5–50%; odstęp strzałów dzielony przez mnożnik |
 | `xp.armorHp` | `1` | dodatkowe HP na poziom, 1–3 |

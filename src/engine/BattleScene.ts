@@ -17,6 +17,7 @@ import {
   TANK_KILL_SCORE_MAP,
   TIMER_FREEZE_TICK,
   TIMER_FREEZE_TICKS,
+  FIELD_BLOCK_SIZE,
 } from './constants'
 import { carriesPowerUp, maxBotsOnField, spawnIntervalFactor } from './difficulty'
 import Tank from './entities/Tank'
@@ -158,6 +159,7 @@ export default class BattleScene {
 
   /** 开战：玩家开始出生，第一辆 bot 在下一次 step 立即出生 */
   start(): void {
+    this.hideStar()
     for (const slot of this.players) {
       this.spawnPlayer(slot)
     }
@@ -286,8 +288,10 @@ export default class BattleScene {
     const level = this.remainingBots.shift()!
     const withPowerUp = carriesPowerUp(this.spawnedBotCount, this.options.difficulty)
     if (withPowerUp) {
-      // 新的携带道具 bot 出场时，清除场上已有道具
+      // 新的携带道具 bot 出场时，清除场上已有道具 (ukryta gwiazdka w cegłach zostaje)
+      const kept = this.powerUps.filter((p) => p.hidden)
       this.powerUps.length = 0
+      this.powerUps.push(...kept)
     }
     this.spawnedBotCount += 1
     const tank = new Tank({
@@ -382,6 +386,39 @@ export default class BattleScene {
       by: 'bullet',
     })
     this.dyingBotTimers.push(BIG_EXPLOSION_DURATION + SCORE_POPUP_DURATION)
+  }
+
+  /**
+   * Ukryta gwiazdka: z szansą z configu chowamy małą gwiazdkę w losowym bloku pełnym cegieł,
+   * z dala od orła. Widać ją dopiero po rozstrzelaniu muru; zbiera się jak zwykłą.
+   */
+  private hideStar(): void {
+    const chance = this.options.hiddenStarChance ?? 0
+    if (chance <= 0) return
+    const { random } = this.options
+    if (random() >= chance) return
+    const candidates: { x: number; y: number }[] = []
+    const eagle = this.map.eagle
+    for (let row = 0; row < FIELD_BLOCK_SIZE; row += 1) {
+      for (let col = 0; col < FIELD_COLS; col += 1) {
+        const x = col * BLOCK_SIZE
+        const y = row * BLOCK_SIZE
+        if (
+          eagle != null &&
+          Math.abs(x - eagle.x) <= BLOCK_SIZE * 2 &&
+          Math.abs(y - eagle.y) <= BLOCK_SIZE * 2
+        )
+          continue
+        // środek bloku (tam, gdzie zbiera się bonus) cały w cegłach
+        const covered = this.map.brickIndicesIn({ x: x + 4, y: y + 4, width: 7.99, height: 7.99 })
+        if (covered.length === 4) candidates.push({ x, y })
+      }
+    }
+    if (candidates.length === 0) return
+    const spot = candidates[Math.floor(random() * candidates.length)]
+    const star = new PowerUp('star', spot.x, spot.y)
+    star.hidden = true
+    this.powerUps.push(star)
   }
 
   private spawnPowerUp(): void {

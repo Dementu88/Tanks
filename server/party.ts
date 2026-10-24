@@ -12,6 +12,7 @@ import { STEP_MS } from '../src/engine/Game'
 import { alignTurn, validTurnSnap } from '../src/engine/physics/turnAlignment'
 import { isPerpendicular } from '../src/engine/physics/geometry'
 import { Profiles, type RecordMode } from './profiles'
+import { GAMEPLAY } from '../src/engine/gameplayConfig'
 import GameSession, { type PlayerConfig } from '../src/engine/GameSession'
 import type { StatisticsView } from '../src/engine/StatisticsAnimation'
 import type { GameEvent } from '../src/engine/events'
@@ -309,6 +310,8 @@ export function createPartyServer({
       autopilot: false,
       random: Math.random,
       difficulty: room.difficulty,
+      hiddenStarChance: GAMEPLAY.hiddenStarChance,
+      stageEndExtraMs: GAMEPLAY.stageEndExtraMs,
       sessionBonuses: () => profiles.xp.bonuses(),
       events: {
         emit: (event) => {

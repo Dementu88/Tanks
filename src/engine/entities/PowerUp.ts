@@ -14,6 +14,11 @@ export default class PowerUp {
   /** 闪烁计时（每 8 帧切换可见性） */
   blinkTimer = 0
   dead = false
+  /**
+   * ukryta w cegłach: rysowana pod cegłami w połowie rozmiaru, nie miga i nie znika,
+   * gdy pojawia się nowy bonus — trzeba ją wystrzelać z muru
+   */
+  hidden = false
 
   constructor(name: PowerUpName, x: number, y: number) {
     this.id = nextPowerUpId++

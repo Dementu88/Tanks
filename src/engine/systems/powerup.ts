@@ -10,6 +10,7 @@ import type { PowerUpName } from '../types'
 /** 道具闪烁：每 8 帧切换可见性；推进并移除已拾取/过期的道具 */
 export function updatePowerUps(powerUps: PowerUp[], delta: number): void {
   for (const p of powerUps) {
+    if (p.hidden) continue
     p.blinkTimer += delta
     if (p.blinkTimer >= frame(8)) {
       p.blinkTimer -= frame(8)

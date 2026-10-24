@@ -55,7 +55,9 @@ export type TankView = Pick<
 >
 export type BulletView = Pick<Bullet, 'bulletId' | 'x' | 'y'>
 export type ExplosionView = Pick<Explosion, 'id' | 'cx' | 'cy' | 'shape'>
-export type PowerUpView = Pick<PowerUp, 'id' | 'name' | 'x' | 'y' | 'visible'>
+export type PowerUpView = Pick<PowerUp, 'id' | 'name' | 'x' | 'y' | 'visible'> & {
+  hidden?: boolean
+}
 export type FlickerView = Pick<Flicker, 'id' | 'x' | 'y' | 'shape'>
 export type ScorePopupView = Pick<ScorePopup, 'id' | 'score' | 'x' | 'y' | 'visible'>
 
@@ -94,6 +96,8 @@ export default class Renderer {
   private readonly helmetLayer = new Container()
   private readonly forestLayer = new Container()
   private readonly powerUpLayer = new Container()
+  /** ukryte bonusy: pod cegłami, widać je dopiero po rozstrzelaniu muru */
+  private readonly hiddenPowerUpLayer = new Container()
   private readonly explosionLayer = new Container()
   private readonly flickerLayer = new Container()
   private readonly scoreLayer = new Container()
@@ -103,6 +107,7 @@ export default class Renderer {
   private readonly helmetSprites = new Map<number, Sprite>()
   private readonly explosionSprites = new Map<number, Sprite>()
   private readonly powerUpSprites = new Map<number, Sprite>()
+  private readonly hiddenPowerUpSprites = new Map<number, Sprite>()
   private readonly flickerSprites = new Map<number, Sprite>()
   private readonly scoreSprites = new Map<number, Sprite>()
 
@@ -135,6 +140,7 @@ export default class Renderer {
   private get layers(): Container[] {
     return [
       this.riverLayer,
+      this.hiddenPowerUpLayer,
       this.terrainLayer,
       this.bulletLayer,
       this.tankLayer,
@@ -167,6 +173,7 @@ export default class Renderer {
       this.helmetSprites,
       this.explosionSprites,
       this.powerUpSprites,
+      this.hiddenPowerUpSprites,
       this.flickerSprites,
       this.scoreSprites,
     ]) {
@@ -349,12 +356,24 @@ export default class Renderer {
     this.syncPool(
       this.powerUpSprites,
       this.powerUpLayer,
-      powerUps,
+      powerUps.filter((p) => !p.hidden),
       (p) => p.id,
       (sprite, p) => {
         sprite.texture = this.atlas.get(`powerup/${p.name}`)
         sprite.position.set(p.x, p.y)
         sprite.visible = p.visible
+      },
+    )
+    // mała gwiazdka w murze: połowa rozmiaru, wyśrodkowana w bloku
+    this.syncPool(
+      this.hiddenPowerUpSprites,
+      this.hiddenPowerUpLayer,
+      powerUps.filter((p) => p.hidden),
+      (p) => p.id,
+      (sprite, p) => {
+        sprite.texture = this.atlas.get(`powerup/${p.name}`)
+        sprite.scale.set(0.5)
+        sprite.position.set(p.x + 4, p.y + 4)
       },
     )
   }

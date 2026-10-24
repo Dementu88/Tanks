@@ -1,5 +1,5 @@
 {
-  "opis": "Ustawienia wbudowywane przy budowaniu gry i serwera. Po zmianie uruchom uruchom_lokalnie.bat lub aktualizuj_serwer.bat. Czasy w ms (1000 ms = 1 s). playerStartRank: poziom czołgu po starcie i odrodzeniu (1–5). XP: wspólna sesja serwera; maxLevel 1–10, startLevels 0–maxLevel, costs = cena LV1, 1–1000000 XP (kolejne kosztują 2x, 3x...). killRewards = XP za zabicie: basic zwykły, fast szybki, power mocne działo, armor opancerzony; 0–1000000, także za granat. XP nalicza się tylko przy enabled=true lub po włączeniu w lobby. speedPercent/firePercent to procent na poziom; armorHp = HP na poziom. enabled=false zachowuje klasyczną grę. Ustawienia lobby mają pierwszeństwo tylko do ponownego uruchomienia serwera. Dwa kolejne ulepszenia: bullet = szybsze pociski (bulletPercent % na poziom, 5–50), shield = dłuższa tarcza po odrodzeniu (shieldMs na poziom, 250–5000 ms).",
+  "opis": "Ustawienia wbudowywane przy budowaniu gry i serwera. Po zmianie uruchom uruchom_lokalnie.bat lub aktualizuj_serwer.bat. Czasy w ms (1000 ms = 1 s). playerStartRank: poziom czołgu po starcie i odrodzeniu (1–5). XP: wspólna sesja serwera; maxLevel 1–10, startLevels 0–maxLevel, costs = cena LV1, 1–1000000 XP (kolejne kosztują 2x, 3x...). killRewards = XP za zabicie: basic zwykły, fast szybki, power mocne działo, armor opancerzony; 0–1000000, także za granat. XP nalicza się tylko przy enabled=true lub po włączeniu w lobby. speedPercent/firePercent to procent na poziom; armorHp = HP na poziom. enabled=false zachowuje klasyczną grę. Ustawienia lobby mają pierwszeństwo tylko do ponownego uruchomienia serwera. Dwa kolejne ulepszenia: bullet = szybsze pociski (bulletPercent % na poziom, 5–50), shield = dłuższa tarcza po odrodzeniu (shieldMs na poziom, 250–5000 ms). hiddenStarChance: szansa (0–1), że na planszy pod cegłami jest ukryta mała gwiazdka. stageEndExtraMs: o ile ms dłużej trwa plansza po zabiciu ostatniego wroga (0–60000).",
   "playerStartRank": 1,
   "playerSpawnShieldMs": 2250,
   "enemySpawnShieldMs": 1000,
@@ -32,5 +32,7 @@
     "armorHp": 1,
     "bulletPercent": 20,
     "shieldMs": 1500
-  }
+  },
+  "hiddenStarChance": 1,
+  "stageEndExtraMs": 5000
 }

@@ -1,4 +1,7 @@
 {
-  "opis": "Profile drużyny. Nowy profil dodasz programem aktualizuj_serwer.bat (opcja 7: Dodaj profil) albo dopisując nazwę tutaj. Postęp (XP, bonusy, rekord) zapisuje się sam w katalogu danych serwera.",
-  "profile": ["TankMonsters"]
+    "opis":  "Profile drużyny. Nowy profil dodasz programem aktualizuj_serwer.bat (opcja 7: Dodaj profil) albo dopisując nazwę tutaj. Postęp (XP, bonusy, rekord) zapisuje się sam w katalogu danych serwera.",
+    "profile":  [
+                    "TankMonsters",
+                    "Testowy"
+                ]
 }
