@@ -503,6 +503,32 @@ function TvLobby({
         <div className="tv-join">
           <QrCode text={qrUrl} />
           <p className="tv-url">{url}</p>
+          <div className="tv-controls">
+            <span className="tv-label">Sterowanie tutaj:</span>
+            <button
+              type="button"
+              className={keyboardOn ? 'tv-toggle on' : 'tv-toggle'}
+              onClick={(e) => {
+                onKeyboard(!keyboardOn)
+                // Enter / spacja mają dalej sterować grą, a nie przełączać przycisk
+                e.currentTarget.blur()
+              }}
+            >
+              {keyboardOn ? 'Ten ekran: TV + klawiatura' : 'Ten ekran: tylko TV'}
+            </button>
+            <span className="tv-muted">pady PS / Xbox zawsze</span>
+            {looksLikePhone() && (
+              <button
+                type="button"
+                className="tv-toggle on"
+                onClick={() => push(`/pad/${room.code}`)}
+              >
+                Steruj tym telefonem
+              </button>
+            )}
+          </div>
+          <VolumeControl muted={mute} />
+          <TvXp room={room} />
         </div>
         <div className="tv-info">
           <p className="tv-label">Kod pokoju</p>
@@ -541,7 +567,7 @@ function TvLobby({
             })}
           </div>
           {localPlayers.some((p) => p.slot != null) && (room.players?.length ?? 0) > 0 && (
-            <p className="tv-muted tv-hint">
+            <p className="tv-muted tv-profile-hint">
               Klawiatura i pady: strzałka lewo / prawo zmienia profil gracza
             </p>
           )}
@@ -619,32 +645,6 @@ function TvLobby({
               {result.scores.map((s, i) => `${i + 1}P: ${s}`).join('   ')}
             </p>
           )}
-          <div className="tv-controls">
-            <span className="tv-label">Sterowanie tutaj:</span>
-            <button
-              type="button"
-              className={keyboardOn ? 'tv-toggle on' : 'tv-toggle'}
-              onClick={(e) => {
-                onKeyboard(!keyboardOn)
-                // Enter / spacja mają dalej sterować grą, a nie przełączać przycisk
-                e.currentTarget.blur()
-              }}
-            >
-              {keyboardOn ? 'Ten ekran: TV + klawiatura' : 'Ten ekran: tylko TV'}
-            </button>
-            <span className="tv-muted">pady PS / Xbox zawsze</span>
-            {looksLikePhone() && (
-              <button
-                type="button"
-                className="tv-toggle on"
-                onClick={() => push(`/pad/${room.code}`)}
-              >
-                Steruj tym telefonem
-              </button>
-            )}
-          </div>
-          <VolumeControl muted={mute} />
-          <TvXp room={room} />
           <p className="tv-hint">{keyboardOn ? PC_HINT : TV_HINT}</p>
           {audioLocked && <p className="tv-warn">Naciśnij OK na pilocie, aby włączyć dźwięk</p>}
           {!connected && <p className="tv-warn">Brak połączenia z serwerem, łączę ponownie…</p>}

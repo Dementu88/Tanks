@@ -21,9 +21,13 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #140303;
+  background: #ddd3c1;
   border: 3px solid #3c1010;
   box-sizing: border-box;
+}
+/* w kółku tło daje samo kółko */
+.logo-circle .profile-logo {
+  background: none;
 }
 .player-card {
   display: flex;

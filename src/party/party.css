@@ -69,32 +69,40 @@ body.party-pad {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3vh;
-  padding: 4vh 4vw;
+  /* niski ekran: przewijanie zamiast ucinania tytułu i dołu */
+  justify-content: safe center;
+  overflow-y: auto;
+  gap: 2vh;
+  padding: 3vh 4vw;
   font-size: 2.4vh;
 }
 .tv-title {
   margin: 0;
-  font-size: 9vh;
+  font-size: 7vh;
   letter-spacing: 0.15em;
   color: #db2b00;
   text-shadow: 0.08em 0.08em 0 #6b2000;
 }
 .tv-columns {
   display: flex;
-  align-items: center;
-  gap: 6vw;
+  align-items: flex-start;
+  gap: 4vw;
 }
 .tv-join {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.5vh;
+  /* szeroki, niski ekran: szersza kolumna, żeby przyciski nie łamały się w wysoką kolumnę */
+  max-width: max(40vh, 28vw);
+}
+.tv-join .tv-controls {
+  margin: 0;
+  align-self: stretch;
 }
 .tv-qr {
-  width: 42vh;
-  height: 42vh;
+  width: 36vh;
+  height: 36vh;
   background: #fff;
   padding: 1vh;
 }
@@ -114,8 +122,8 @@ body.party-pad {
 .tv-info {
   display: flex;
   flex-direction: column;
-  gap: 1.6vh;
-  max-width: 60vw;
+  gap: 1.4vh;
+  max-width: 56vw;
 }
 .tv-info p {
   margin: 0;
@@ -125,7 +133,7 @@ body.party-pad {
   font-size: 3vh;
 }
 .tv-code {
-  font-size: 12vh;
+  font-size: 9vh;
   font-weight: bold;
   letter-spacing: 0.2em;
   line-height: 1;
@@ -139,7 +147,8 @@ body.party-pad {
 .tv-pad {
   display: flex;
   align-items: center;
-  gap: 1.5vw;
+  gap: 1vw;
+  white-space: nowrap;
   opacity: 0.45;
 }
 .tv-pad.on {
@@ -1112,9 +1121,14 @@ body.party-pad {
   color: var(--red-mid, #b01010);
 }
 .profile-logo {
+  /* ciemny awatar na jasnym kółku — jasny na ciemnym wychodził jak negatyw */
   flex: none;
-  color: #fff;
-  filter: drop-shadow(0 0 3px rgba(255, 42, 42, 0.8));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ddd3c1;
+  color: #1c1212;
 }
 .tv-pad-profile {
   display: inline-flex;
@@ -1122,14 +1136,11 @@ body.party-pad {
   gap: 0.6vh;
   color: #fff;
 }
-.tv-pad-profile .profile-logo {
-  filter: none;
-}
 
 /* ‹ › wyboru profilu przy graczu klawiatury / pada w lobby TV */
 .tv-profile-step {
   padding: 0.4vh 0.8vh;
 }
-.tv-hint {
+.tv-profile-hint {
   font-size: 2vh;
 }

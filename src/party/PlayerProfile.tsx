@@ -22,16 +22,19 @@ export const LOGOS: LogoDef[] = (logosConfig as { loga: LogoDef[] }).loga
 export function ProfileLogo({ id, size = 22 }: { id: string | null | undefined; size?: number }) {
   const logo = LOGOS.find((l) => l.id === id)
   if (logo == null) return null
+  // ciemny rysunek na jasnym kółku (samo kółko robi CSS)
+  const inner = Math.round(size * 0.78)
   return (
-    <svg
-      className="profile-logo"
-      viewBox={logo.viewBox ?? '0 0 24 24'}
-      width={size}
-      height={size}
-      aria-label={logo.nazwa}
-      role="img"
-      dangerouslySetInnerHTML={{ __html: logo.svg }}
-    />
+    <span className="profile-logo" style={{ width: size, height: size }}>
+      <svg
+        viewBox={logo.viewBox ?? '0 0 24 24'}
+        width={inner}
+        height={inner}
+        aria-label={logo.nazwa}
+        role="img"
+        dangerouslySetInnerHTML={{ __html: logo.svg }}
+      />
+    </span>
   )
 }
 
