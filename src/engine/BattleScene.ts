@@ -291,8 +291,10 @@ export default class BattleScene {
     const level = this.remainingBots.shift()!
     const withPowerUp = carriesPowerUp(this.spawnedBotCount, this.options.difficulty)
     if (withPowerUp) {
-      // 新的携带道具 bot 出场时，清除场上已有道具 (ukryta gwiazdka w cegłach zostaje)
-      const kept = this.powerUps.filter((p) => p.hidden)
+      // 新的携带道具 bot 出场时，清除场上已有道具 (ukryta gwiazdka w cegłach zostaje,
+      // a z powerUpMinMs także znajdźki leżące krócej niż ten czas)
+      const minMs = this.options.powerUpMinMs ?? 0
+      const kept = this.powerUps.filter((p) => p.hidden || p.age < minMs)
       this.powerUps.length = 0
       this.powerUps.push(...kept)
     }

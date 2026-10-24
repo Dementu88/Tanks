@@ -19,6 +19,8 @@ export default class PowerUp {
    * gdy pojawia się nowy bonus — trzeba ją wystrzelać z muru
    */
   hidden = false
+  /** ile ms leży na planszy (minimalny czas życia: SessionOptions.powerUpMinMs) */
+  age = 0
 
   constructor(name: PowerUpName, x: number, y: number) {
     this.id = nextPowerUpId++

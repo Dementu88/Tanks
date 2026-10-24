@@ -356,6 +356,7 @@ export function createPartyServer({
       difficulty: room.difficulty,
       hiddenStarChance: GAMEPLAY.hiddenStarChance,
       stageEndExtraMs: GAMEPLAY.stageEndExtraMs,
+      powerUpMinMs: GAMEPLAY.powerUpMinMs,
       sessionBonuses: () => profiles.xp.bonuses(),
       events: {
         emit: (event) => {

@@ -62,6 +62,11 @@ export interface SessionOptions {
   hiddenStarChance?: number
   /** o ile ms dłużej trwa plansza po zabiciu ostatniego wroga; brak = 0 */
   stageEndExtraMs?: number
+  /**
+   * znajdźka leży co najmniej tyle ms: następny wróg z bonusem jej nie kasuje, póki jest młodsza
+   * (brak = jak w oryginale — znika, gdy wjedzie kolejny wróg z bonusem)
+   */
+  powerUpMinMs?: number
   /** poligon: własny obszar niszczenia pocisku (px); brak / null = jak w oryginale */
   bulletDamage?: () => BulletDamage | null
   /** Options 页的托管开关；false 时不计空闲、不托管 */

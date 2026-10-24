@@ -21,6 +21,7 @@ Sam zapis JSON nie zmienia już uruchomionej wersji produkcyjnej.
 | `bonusShieldMs` | `10500` | czas tarczy z bonusu, 0–60000 ms |
 | `hiddenStarChance` | `1` | szansa 0–1, że na planszy jest **ukryta gwiazdka**: mała (50%) gwiazdka pod cegłami w losowym pełnym bloku z dala od orła; widać ją po rozstrzelaniu muru, zbiera się jak zwykłą; nie miga i nie znika przy nowym bonusie |
 | `stageEndExtraMs` | `5000` | o ile ms dłużej trwa plansza po zabiciu ostatniego wroga (0–60000); czołgi dalej jeżdżą, można zebrać bonusy |
+| `powerUpMinMs` | `20000` | znajdźka leży co najmniej tyle ms — wcześniej nie skasuje jej kolejny wróg z bonusem (w oryginale znika, gdy wjedzie następny migający wróg); 0 = jak w oryginale, 0–120000 |
 | `xp.enabled` | `true` | czy nowa sesja domyślnie włącza XP |
 | `xp.maxLevel` | `3` | maksymalny poziom każdej cechy XP, 1–10 |
 | `xp.startLevels.speed/fire/armor` | `0` | początkowe ulepszenia nowej sesji, 0–maxLevel |

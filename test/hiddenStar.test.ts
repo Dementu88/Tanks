@@ -6,11 +6,12 @@ import InputManager from '../src/input/InputManager'
 import { SceneEncoder, SceneMirror } from '../src/lan/frame'
 import { stages } from '../src/stages'
 import { GAMEPLAY } from '../src/engine/gameplayConfig'
+import PowerUp from '../src/engine/entities/PowerUp'
 import { P1, killAllBots, makeStage, runUntilPlaying, runUntilSpawned } from './helpers'
 
 function session(
   stage = stages[0],
-  options: { hiddenStarChance?: number; stageEndExtraMs?: number } = {},
+  options: { hiddenStarChance?: number; stageEndExtraMs?: number; powerUpMinMs?: number } = {},
 ) {
   const s = new GameSession(
     [stage],
@@ -114,5 +115,31 @@ describe('dłuższy koniec planszy', () => {
     const longer = ends(5000)
     expect(longer - base).toBeGreaterThanOrEqual(4950)
     expect(longer - base).toBeLessThanOrEqual(5050)
+  })
+})
+
+describe('minimalny czas znajdźki', () => {
+  // znajdźka na planszy przed wjazdem 4. wroga (pierwszego z bonusem)
+  const untilCarrier = (powerUpMinMs?: number) => {
+    const { s, run } = session(stages[0], powerUpMinMs == null ? {} : { powerUpMinMs })
+    runUntilPlaying(s, run)
+    const scene = s.scene!
+    const bonus = new PowerUp('timer', 0, 0)
+    scene.powerUps.push(bonus)
+    const spawned = () => (scene as unknown as { spawnedBotCount: number }).spawnedBotCount
+    while (spawned() < 4) run(STEP_MS)
+    return scene.powerUps.includes(bonus)
+  }
+
+  it('bez opcji: wróg z bonusem kasuje leżącą znajdźkę (oryginał)', () => {
+    expect(untilCarrier()).toBe(false)
+  })
+
+  it('z powerUpMinMs: młodsza znajdźka zostaje', () => {
+    expect(untilCarrier(60000)).toBe(true)
+  })
+
+  it('config: 20 s', () => {
+    expect(GAMEPLAY.powerUpMinMs).toBe(20000)
   })
 })
