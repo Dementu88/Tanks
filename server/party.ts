@@ -12,6 +12,7 @@ import { STEP_MS } from '../src/engine/Game'
 import { alignTurn, validTurnSnap } from '../src/engine/physics/turnAlignment'
 import { isPerpendicular } from '../src/engine/physics/geometry'
 import { Profiles, type RecordMode } from './profiles'
+import { PlayerBook } from './players'
 import { GAMEPLAY } from '../src/engine/gameplayConfig'
 import GameSession, { type PlayerConfig } from '../src/engine/GameSession'
 import type { StatisticsView } from '../src/engine/StatisticsAnimation'
@@ -92,6 +93,8 @@ interface Pad {
   /** ogień wciśnięty od ostatniego kroku — szybkie stuknięcie mieści się między krokami */
   pendingPress: boolean
   turnSnap: number
+  /** wybrany profil gracza (id z config/gracze.json); null = gość */
+  player: string | null
 }
 
 interface RunningGame {
@@ -176,6 +179,8 @@ export interface PartyServerOptions {
   }
   /** profile drużyny z zapisem postępu; brak = profile z configu, tylko w pamięci */
   profiles?: Profiles
+  /** profile graczy ze statystykami; brak = gracze z configu, tylko w pamięci */
+  players?: PlayerBook
 }
 
 const digest = (text: string) => createHash('sha256').update(text).digest()
@@ -190,6 +195,7 @@ export function createPartyServer({
   onGameEvent,
   dev,
   profiles = new Profiles(),
+  players: book = new PlayerBook(),
 }: PartyServerOptions = {}) {
   const wss = new WebSocketServer({
     noServer: true,
@@ -265,6 +271,20 @@ export function createPartyServer({
     difficultyNames: DIFFICULTY_LEVELS.map((d) => d.nazwa),
     difficultyChooser: difficultyChooser(room),
     xp: profiles.xp.snapshot(),
+    players: book.defs.map((d) => ({ id: d.id, name: d.name, logo: book.logoOf(d.id) })),
+    padPlayers: room.pads.map((p) => p?.player ?? null),
+    padStats: room.pads.map((p) => {
+      const s = p?.player == null ? undefined : book.statsOf(p.player)
+      return s == null
+        ? null
+        : {
+            games: s.games,
+            stages: s.stagesPlayed,
+            bestStage: s.bestStage,
+            kills: s.kills.basic + s.kills.fast + s.kills.power + s.kills.armor,
+            deaths: s.deaths,
+          }
+    }),
     profile: {
       name: profiles.current,
       names: [...profiles.names],
@@ -289,12 +309,15 @@ export function createPartyServer({
       playerOfSlot[slot] = players.length
       // gracz = telefon: ten sam telefon to ten sam gracz także w kolejnych grach
       players.push({
-        id: pad.device ?? `slot-${slot + 1}`,
+        // profil gracza (statystyki); bez profilu — telefon
+        id: pad.player ?? pad.device ?? `slot-${slot + 1}`,
         control: PAD_CONTROLS[slot],
         ...slotLook(slot, cols),
       })
     })
     if (players.length === 0) return
+    book.gameEnded()
+    book.gameStarted(players.map((p) => p.id).filter((id) => book.has(id)))
     const sounds: SoundName[] = []
     const audio: AudioPort = { play: (name) => sounds.push(name) }
     // plansza -1 = losowe: cała seria nowych, wylosowanych plansz (R1, R2…)
@@ -319,6 +342,7 @@ export function createPartyServer({
             profiles.changed()
             broadcastRoom(room)
           }
+          book.record(event)
           try {
             onGameEvent?.(event)
           } catch (err) {
@@ -354,6 +378,7 @@ export function createPartyServer({
   }
 
   const stopGame = (room: Room, result: LanResult | null) => {
+    book.gameEnded()
     room.game = null
     room.paused = false
     if (result != null) room.lastResult = result
@@ -721,6 +746,7 @@ export function createPartyServer({
           bits: 0,
           pendingPress: false,
           turnSnap: 8,
+          player: null,
         }
         send(ws, { t: 'joined', role: 'pad', code: target.code, slot })
         broadcastRoom(target)
@@ -774,6 +800,19 @@ export function createPartyServer({
       }
       case 'sensitivity':
         if (validTurnSnap(msg.turnSnap)) pad.turnSnap = msg.turnSnap
+        return
+      case 'player': {
+        // profil gracza wybiera się w lobby; dwa telefony nie mogą mieć tego samego
+        if (room.game != null) return
+        const id = msg.id == null ? null : String(msg.id)
+        if (id != null && (!book.has(id) || room.pads.some((p) => p !== pad && p?.player === id)))
+          return
+        pad.player = id
+        broadcastRoom(room)
+        return
+      }
+      case 'player-logo':
+        if (pad.player != null && book.setLogo(pad.player, String(msg.logo))) broadcastRoom(room)
         return
       case 'start':
         startGame(room)
@@ -902,8 +941,11 @@ export function createPartyServer({
     },
     rooms: () => rooms.size,
     close() {
+      book.gameEnded()
       void profiles.flush()
+      void book.flush()
       profiles.dispose()
+      book.dispose()
       clearInterval(loop)
       clearInterval(heartbeat)
       if (devTimer !== 0) clearInterval(devTimer)

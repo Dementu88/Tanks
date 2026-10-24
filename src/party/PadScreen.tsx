@@ -27,6 +27,7 @@ import {
 } from './controls'
 import { PAD_SLOTS, WIDE_STAGE, type PartyRoomState } from './protocol'
 import { hasRecordStart, recordStage } from './profileView'
+import { PlayerPicker, useRememberedPlayer } from './PlayerProfile'
 import { useBodyClass } from './shared'
 import '@fontsource/orbitron/500.css'
 import '@fontsource/orbitron/700.css'
@@ -109,6 +110,7 @@ export default function PadScreen({
   const activeFire = fire || hardware.fire
   useBodyClass('party')
   useBodyClass('party-pad')
+  useRememberedPlayer(room, slot)
 
   useEffect(() => {
     rememberPartyKey(accessKey)
@@ -294,6 +296,7 @@ export default function PadScreen({
           <div className="pad-spacer" />
           <FullscreenButton />
         </div>
+        {!playing && <PlayerPicker room={room} slot={slot} />}
         <div className="pad-tuning" onKeyDown={(e) => e.stopPropagation()}>
           <label className="pad-zone">
             <span>STREFA OBROTU</span>
@@ -710,7 +713,7 @@ function HostMenu({ room, onClose }: { room: PartyRoomState; onClose: (resume: b
         {!playing && room.profile != null && (
           <>
             <MenuStepper
-              label="PROFIL"
+              label="DRUŻYNA"
               value={room.profile.name.toUpperCase()}
               onStep={(delta) => sendParty({ t: 'profile', delta })}
               note={`rekord: plansza ${recordStage(room)}`}

@@ -1092,3 +1092,36 @@ body.party-pad {
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/* profil gracza na padzie i na TV */
+.pad-player-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  flex-shrink: 0;
+}
+.pad-player-pick .pad-player-name {
+  flex: 1;
+  min-width: 0;
+}
+.pad-player-stats {
+  flex: 1 0 100%;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--red-mid, #b01010);
+}
+.profile-logo {
+  flex: none;
+  color: #fff;
+  filter: drop-shadow(0 0 3px rgba(255, 42, 42, 0.8));
+}
+.tv-pad-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6vh;
+  color: #fff;
+}
+.tv-pad-profile .profile-logo {
+  filter: none;
+}

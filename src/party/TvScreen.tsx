@@ -34,6 +34,7 @@ import { attachKeyboard, watchGamepads } from './controls'
 import { LocalPad, type LocalPadState } from './localPad'
 import { WIDE_STAGE, type PartyRoomState } from './protocol'
 import { hasRecordStart, recordStage } from './profileView'
+import { ProfileLogo } from './PlayerProfile'
 import { PlayerBadge, useBodyClass } from './shared'
 import './party.css'
 
@@ -461,9 +462,17 @@ function TvLobby({
             {room.pads.map((on, slot) => {
               const local = localPlayers.find((p) => p.slot === slot)
               const status = local != null ? local.label : on ? 'gotowy' : 'czeka'
+              const profileId = room.padPlayers?.[slot]
+              const profile = room.players?.find((p) => p.id === profileId)
               return (
                 <div key={slot} className={`tv-pad ${on ? 'on' : ''}`}>
                   <PlayerBadge slot={slot} />
+                  {profile != null && (
+                    <span className="tv-pad-profile">
+                      <ProfileLogo id={profile.logo} size={26} />
+                      {profile.name}
+                    </span>
+                  )}
                   <span>{status}</span>
                 </div>
               )
@@ -491,11 +500,11 @@ function TvLobby({
           )}
           {room.profile != null && (
             <div className="tv-controls">
-              <span className="tv-label">Profil:</span>
+              <span className="tv-label">Drużyna:</span>
               <button
                 type="button"
                 className="tv-toggle"
-                aria-label="Poprzedni profil"
+                aria-label="Poprzednia drużyna"
                 onClick={(e) => {
                   sendParty({ t: 'profile', delta: -1 })
                   e.currentTarget.blur()
@@ -509,7 +518,7 @@ function TvLobby({
               <button
                 type="button"
                 className="tv-toggle"
-                aria-label="Następny profil"
+                aria-label="Następna drużyna"
                 onClick={(e) => {
                   sendParty({ t: 'profile', delta: 1 })
                   e.currentTarget.blur()

@@ -7,8 +7,9 @@
 #   -Status        pokazuje stan gry na serwerze
 #   -DodajProfil "Nazwa"   dopisuje profil druzyny do config\profile.json (potem Aktualizuj gre)
 #   -Profile       pokazuje liste profili
+#   -Gracze        pokazuje profile graczy (dodawanie / edycja / usuwanie: menu 9-12)
 param([switch]$BezTestow, [switch]$TylkoPaczka, [switch]$Online, [switch]$Offline, [switch]$Status,
-      [string]$DodajProfil = '', [switch]$Profile)
+      [string]$DodajProfil = '', [switch]$Profile, [switch]$Gracze)
 
 $ErrorActionPreference = 'Stop'
 
@@ -125,6 +126,96 @@ function DodajProfil($nazwa) {
     Write-Host 'Lokalnie: uruchom_lokalnie.bat. Na serwer: opcja 1 (Aktualizuj gre).' -ForegroundColor Green
 }
 
+# ---- profile graczy (config\gracze.json; statystyki zapisuje sam serwer) ----
+$PlikGraczy = Join-Path $Root 'config\gracze.json'
+$PlikLog = Join-Path $Root 'config\loga.json'
+
+function ZapiszJson($sciezka, $dane) {
+    $json = $dane | ConvertTo-Json -Depth 6
+    [System.IO.File]::WriteAllText($sciezka, $json + "`n", (New-Object System.Text.UTF8Encoding($false)))
+}
+function CzytajGraczy { return (Get-Content -Raw -Encoding UTF8 $PlikGraczy | ConvertFrom-Json) }
+function ListaLog { return @((Get-Content -Raw -Encoding UTF8 $PlikLog | ConvertFrom-Json).loga) }
+
+function PokazGraczy {
+    $dane = CzytajGraczy
+    Krok 'Profile graczy'
+    $i = 1
+    foreach ($g in @($dane.gracze)) {
+        Write-Host ("  {0}. {1}  (logo: {2}, id: {3})" -f $i, $g.nazwa, $g.logo, $g.id)
+        $i++
+    }
+    if ($i -eq 1) { Write-Host '  (brak)' }
+}
+function WybierzLogo($obecne) {
+    $loga = ListaLog
+    $i = 1
+    foreach ($l in $loga) { Write-Host ("  {0}. {1}" -f $i, $l.nazwa); $i++ }
+    $nr = Read-Host "Logo (numer, Enter = $obecne)"
+    if ($nr -eq '') { return $obecne }
+    $n = [int]$nr
+    if ($n -lt 1 -or $n -gt $loga.Count) { throw 'Nie ma takiego logo' }
+    return $loga[$n - 1].id
+}
+function SprawdzNazwe($nazwa) {
+    $nazwa = "$nazwa".Trim()
+    if ($nazwa -notmatch '^[\p{L}\p{N} _-]{1,24}$') {
+        throw 'Nazwa gracza: 1-24 znaki (litery, cyfry, spacja, - lub _)'
+    }
+    return $nazwa
+}
+function NoweId($nazwa, $zajete) {
+    $baza = $nazwa.ToLowerInvariant().Normalize([Text.NormalizationForm]::FormD)
+    $baza = ($baza -replace '\p{Mn}', '') -replace [char]0x0142, 'l' -replace '[^a-z0-9]+', '-'
+    $baza = $baza.Trim('-')
+    if ($baza -eq '') { $baza = 'gracz' }
+    if ($baza.Length -gt 20) { $baza = $baza.Substring(0, 20) }
+    $id = $baza
+    $k = 2
+    while ($zajete -contains $id) { $id = "$baza-$k"; $k++ }
+    return $id
+}
+function DodajGracza {
+    $nazwa = SprawdzNazwe (Read-Host 'Nazwa nowego gracza')
+    $dane = CzytajGraczy
+    $lista = @($dane.gracze)
+    if (@($lista | Where-Object { $_.nazwa -eq $nazwa }).Count -gt 0) { throw "Gracz '$nazwa' juz jest" }
+    $logo = WybierzLogo ((ListaLog)[0].id)
+    $id = NoweId $nazwa @($lista | ForEach-Object { $_.id })
+    $dane.gracze = @($lista + [pscustomobject]@{ id = $id; nazwa = $nazwa; logo = $logo })
+    ZapiszJson $PlikGraczy $dane
+    Write-Host "Dodano gracza '$nazwa'. Lokalnie: uruchom_lokalnie.bat. Na serwer: opcja 1." -ForegroundColor Green
+}
+function WybierzGracza($dane) {
+    PokazGraczy
+    $lista = @($dane.gracze)
+    $nr = [int](Read-Host 'Numer gracza')
+    if ($nr -lt 1 -or $nr -gt $lista.Count) { throw 'Nie ma takiego gracza' }
+    return $nr - 1
+}
+function EdytujGracza {
+    $dane = CzytajGraczy
+    $i = WybierzGracza $dane
+    $g = @($dane.gracze)[$i]
+    $nowa = Read-Host "Nowa nazwa (Enter = $($g.nazwa))"
+    if ($nowa -ne '') { $g.nazwa = SprawdzNazwe $nowa }
+    $g.logo = WybierzLogo $g.logo
+    ZapiszJson $PlikGraczy $dane
+    Write-Host 'Zapisano. Statystyki zostaja (trzymane po id).' -ForegroundColor Green
+}
+function UsunGracza {
+    $dane = CzytajGraczy
+    $i = WybierzGracza $dane
+    $lista = [System.Collections.ArrayList]@($dane.gracze)
+    $g = $lista[$i]
+    if ((Read-Host "Usunac '$($g.nazwa)'? (t/n)") -ne 't') { return }
+    $lista.RemoveAt($i)
+    $dane.gracze = @($lista)
+    ZapiszJson $PlikGraczy $dane
+    Write-Host "Usunieto '$($g.nazwa)'. Jego statystyki zostaja w pliku danych serwera." -ForegroundColor Green
+}
+
+if ($Gracze) { PokazGraczy; exit 0 }
 if ($Profile) { PokazProfile; exit 0 }
 if ($DodajProfil -ne '') { DodajProfil $DodajProfil; exit 0 }
 if ($Online) { GraOnline; exit 0 }
@@ -143,6 +234,10 @@ while ($true) {
     Write-Host '  6  Tylko zbuduj paczke'
     Write-Host '  7  Dodaj profil druzyny'
     Write-Host '  8  Lista profili'
+    Write-Host '  9  Gracze: lista'
+    Write-Host ' 10  Gracze: dodaj'
+    Write-Host ' 11  Gracze: edytuj (nazwa, logo)'
+    Write-Host ' 12  Gracze: usun'
     Write-Host '  0  Wyjscie'
     $wybor = Read-Host 'Wybierz'
     try {
@@ -155,6 +250,10 @@ while ($true) {
             '6' { Aktualizuj $false $true }
             '7' { DodajProfil (Read-Host 'Nazwa nowego profilu') }
             '8' { PokazProfile }
+            '9' { PokazGraczy }
+            '10' { DodajGracza }
+            '11' { EdytujGracza }
+            '12' { UsunGracza }
             '0' { exit 0 }
             default { Write-Host 'Nieznana opcja' -ForegroundColor Yellow }
         }

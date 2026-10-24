@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { setPlayerStatsTable, type PlayerLevelStats } from '../src/engine/tankStats'
 import { createPartyServer } from './party'
 import { fileStore, Profiles } from './profiles'
+import { PlayerBook, playersFileStore } from './players'
 import { GAMEPLAY } from '../src/engine/gameplayConfig'
 import { DEFAULT_XP_CONFIG } from '../src/engine/sessionXp'
 import { createControlLabRelay } from './controlLab'
@@ -142,10 +143,15 @@ const DATA_DIR =
   process.env.PARTY_DATA_DIR?.trim() || fileURLToPath(new URL('../data/', import.meta.url))
 const PROFILE_FILE = join(DATA_DIR, 'profile-postep.json')
 const profiles = new Profiles(undefined, fileStore(PROFILE_FILE))
+const players = new PlayerBook(
+  undefined,
+  playersFileStore(join(DATA_DIR, 'gracze-statystyki.json')),
+)
 
 const party = createPartyServer({
   key,
   profiles,
+  players,
   dev: devMode ? { saveStats: saveStatsFile, loadStats: loadStatsFile } : undefined,
   // na razie tylko dziennik (journalctl); profile i osiągnięcia podepną się w tym miejscu
   onGameEvent: (event) => {
@@ -213,7 +219,7 @@ server.on('upgrade', (req, socket, head) => {
 })
 server.on('close', () => lab?.close())
 // najpierw wczytujemy postęp profili, potem przyjmujemy graczy
-void profiles.ready.then(() =>
+void Promise.all([profiles.ready, players.ready]).then(() =>
   server.listen(port, '::', () => {
     console.log(`[profile] ${profiles.names.join(', ')} · postęp: ${PROFILE_FILE}`)
     const link = `http://localhost:${port}/#/tv${key == null ? '' : '?k=<PARTY_KEY>'}`
@@ -225,7 +231,9 @@ void profiles.ready.then(() =>
 const shutdown = () => {
   party.close()
   // postęp profili zapisujemy przed wyjściem
-  void profiles.flush().finally(() => server.close(() => process.exit(0)))
+  void Promise.all([profiles.flush(), players.flush()]).finally(() =>
+    server.close(() => process.exit(0)),
+  )
 }
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)

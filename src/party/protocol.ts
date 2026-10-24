@@ -53,6 +53,18 @@ export interface PartyRoomState {
   /** slot, który wybiera poziom (pierwszy podłączony gracz); null = nikt */
   difficultyChooser: number | null
   xp?: XpState
+  /** profile graczy do wyboru (logo = id z config/loga.json) */
+  players?: { id: string; name: string; logo: string }[]
+  /** profil gracza wybrany przez każdy pad (null = gość) */
+  padPlayers?: (string | null)[]
+  /** krótkie statystyki gracza przy każdym padzie */
+  padStats?: ({
+    games: number
+    stages: number
+    bestStage: number
+    kills: number
+    deaths: number
+  } | null)[]
   /** profil drużyny: postęp XP i rekord zapisują się sam */
   profile?: {
     name: string
@@ -104,6 +116,10 @@ export type PartyClientMessage =
   | { t: 'stage'; delta: number }
   /** poprzedni / następny poziom trudności — tylko pierwszy gracz; w grze działa od restartu */
   | { t: 'difficulty'; delta: number }
+  /** pad wybiera swój profil gracza (null = gość), w lobby */
+  | { t: 'player'; id: string | null }
+  /** pad zmienia logo swojego profilu */
+  | { t: 'player-logo'; logo: string }
   /** poprzedni / następny profil drużyny (pierwszy gracz albo ekran, w lobby) */
   | { t: 'profile'; delta: number }
   /** losowe plansze od rekordu profilu albo od początku */

@@ -144,3 +144,21 @@ osobno dla plansz z gry, losowych i szerokich. Pierwszy profil to **TankMonsters
 - Nowy profil: `aktualizuj_serwer.bat` → 7 „Dodaj profil drużyny”, potem 1 (Aktualizuj grę).
   Lista profili leży w `config/profile.json`.
 - XP jest domyślnie włączone (`config/rozgrywka.json` → `xp.enabled`).
+
+## Profile graczy
+
+Każdy gracz może grać na swoim profilu ze statystykami: zabici wrogowie (osobno każdy typ
+i granatem), gry, rozegrane i ukończone rundy, najdalsza plansza, strzały, trafienia, śmierci,
+bonusy, życia, punkty i czas gry. Pola `level` i `xp` czekają na przyszłe poziomy postaci.
+
+- Wybór: na padzie w lobby strzałki przy nazwie (pierwsza pozycja to GOŚĆ, bez zapisu). Telefon
+  pamięta swój profil i wybiera go sam po dołączeniu. Dwa telefony nie mogą mieć tego samego.
+- Logo: kliknięcie nazwy na padzie zmienia logo na następne. Loga są w `config/loga.json`
+  (SVG w polu 24 × 24); podmienimy je na loga od czata.
+- TV pokazuje logo i nazwę gracza przy jego miejscu.
+- Dodawanie, edycja (nazwa, logo) i usuwanie: `aktualizuj_serwer.bat` → 9–12, potem 1, żeby
+  wgrać. Lista leży w `config/gracze.json`; `id` się nie zmienia, więc statystyki zostają.
+- Statystyki zapisują się same (najwyżej raz na 3 s i przy zamykaniu) do
+  `data/gracze-statystyki.json` lokalnie albo do `PARTY_DATA_DIR` na serwerze.
+
+Profil drużyny (np. TankMonsters, XP i rekord) wybiera się osobno: „Drużyna” na TV i w MENU.
