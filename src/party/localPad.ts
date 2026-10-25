@@ -89,12 +89,21 @@ export class LocalPad {
     this.send({ t: 'player', id: next })
   }
 
+  /** lobby: kolor czołgu (strzałki góra-dół albo ▲ ▼ na ekranie) */
+  stepColor(delta: number): void {
+    const { room, slot } = this
+    if (room == null || slot == null || room.playing) return
+    this.send({ t: 'color', delta })
+  }
+
   setInput(input: PadInput): void {
-    // w lobby lewo / prawo zmienia profil (tylko przy wciśnięciu, nie przy trzymaniu)
+    // w lobby lewo / prawo zmienia profil, góra / dół kolor (tylko przy wciśnięciu, nie przy trzymaniu)
     if (input.direction !== this.direction) {
       this.direction = input.direction
       if (input.direction === 'left') this.stepProfile(-1)
       else if (input.direction === 'right') this.stepProfile(1)
+      else if (input.direction === 'up') this.stepColor(-1)
+      else if (input.direction === 'down') this.stepColor(1)
     }
     const bits = encodePadInput(input)
     if (bits === this.bits) return

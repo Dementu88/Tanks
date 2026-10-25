@@ -22,7 +22,7 @@ import {
   setPlayerStatsTable,
   type PlayerLevelStats,
 } from '../src/engine/tankStats'
-import type { AudioPort, SoundName } from '../src/engine/types'
+import type { AudioPort, SoundName, TankColor } from '../src/engine/types'
 import type { PlayerControl } from '../src/input/bindings'
 import { SceneEncoder, type FrameMessage } from '../src/lan/frame'
 import { decodeInput, HostInput, type InputSample } from '../src/lan/input'
@@ -76,8 +76,18 @@ const PAD_CONTROLS: PlayerControl[] = Array.from({ length: PAD_SLOTS }, (_, slot
 }))
 
 /** wygląd i start każdego miejsca: Gracz 1 żółty … Gracz 4 fioletowy; start zależy od szerokości */
-const slotLook = (slot: number, cols: number): Pick<PlayerConfig, 'color' | 'spawnPos'> => ({
-  color: PLAYER_COLORS[slot],
+/** wolny kolor czołgu dla miejsca: najpierw kolor miejsca, potem pierwszy niezajęty */
+const freeColor = (pads: (Pad | null)[], slot: number): TankColor => {
+  const used = new Set(pads.flatMap((p, i) => (p != null && i !== slot ? [p.color] : [])))
+  return [PLAYER_COLORS[slot], ...PLAYER_COLORS].find((c) => !used.has(c)) ?? PLAYER_COLORS[slot]
+}
+
+const slotLook = (
+  slot: number,
+  cols: number,
+  color: TankColor,
+): Pick<PlayerConfig, 'color' | 'spawnPos'> => ({
+  color,
   spawnPos: playerSpawns(cols)[slot],
 })
 
@@ -95,6 +105,8 @@ interface Pad {
   turnSnap: number
   /** wybrany profil gracza (id z config/gracze.json); null = gość */
   player: string | null
+  /** kolor czołgu (wybór w lobby: strzałki góra / dół); dwa pady nie mają tego samego */
+  color: TankColor
 }
 
 interface RunningGame {
@@ -294,6 +306,7 @@ export function createPartyServer({
       xp: book.statsOf(d.id)?.xp ?? 0,
     })),
     padPlayers: room.pads.map((p) => p?.player ?? null),
+    padColors: room.pads.map((p) => p?.color ?? null),
     padStats: room.pads.map((p) => {
       const s = p?.player == null ? undefined : book.statsOf(p.player)
       return s == null
@@ -333,7 +346,7 @@ export function createPartyServer({
         // profil gracza (statystyki); bez profilu — telefon
         id: pad.player ?? pad.device ?? `slot-${slot + 1}`,
         control: PAD_CONTROLS[slot],
-        ...slotLook(slot, cols),
+        ...slotLook(slot, cols, pad.color),
       })
     })
     if (players.length === 0) return
@@ -422,9 +435,9 @@ export function createPartyServer({
       const held = pad == null ? 0 : pad.bits
       const sample: InputSample = { ...decodeInput(held), firePressed: pad?.pendingPress ?? false }
       const scene = game.session.scene
-      const tank = scene?.tanks.find(
-        (t) => t.alive && t.side === 'player' && t.color === PLAYER_COLORS[slot],
-      )
+      // czołg gracza z tego miejsca: po kolorze wybranym na tę grę
+      const color = game.session.players[game.playerOfSlot[slot]!].color
+      const tank = scene?.tanks.find((t) => t.alive && t.side === 'player' && t.color === color)
       if (
         scene != null &&
         tank != null &&
@@ -782,6 +795,11 @@ export function createPartyServer({
           pendingPress: false,
           turnSnap: 8,
           player: null,
+          // ten sam telefon zachowuje kolor; nowy dostaje wolny
+          color:
+            previous != null && previous.device === device && device != null
+              ? previous.color
+              : freeColor(target.pads, slot),
         }
         send(ws, { t: 'joined', role: 'pad', code: target.code, slot })
         broadcastRoom(target)
@@ -830,6 +848,12 @@ export function createPartyServer({
       else if (room.game != null) stopGame(room, null)
       return
     }
+    if (room.tvs.has(ws) && room.game == null && (msg.t === 'stage' || msg.t === 'difficulty')) {
+      if (msg.t === 'stage') room.stageIndex = nextStage(room.stageIndex, Number(msg.delta))
+      else room.difficulty = nextDifficulty(room.difficulty, Number(msg.delta))
+      broadcastRoom(room)
+      return
+    }
     if (pad == null) return
     switch (msg.t) {
       case 'in': {
@@ -849,6 +873,25 @@ export function createPartyServer({
           return
         pad.player = id
         broadcastRoom(room)
+        return
+      }
+      case 'color': {
+        // kolor czołgu: w lobby, kolejny wolny (zajętych przez inne pady nie da się wybrać)
+        if (room.game != null) return
+        const slot = room.pads.indexOf(pad)
+        const used = new Set(
+          room.pads.flatMap((p, i) => (p != null && i !== slot ? [p.color] : [])),
+        )
+        const step = Number(msg.delta) < 0 ? -1 : 1
+        let i = PLAYER_COLORS.indexOf(pad.color)
+        for (let n = 0; n < PLAYER_COLORS.length; n += 1) {
+          i = (i + step + PLAYER_COLORS.length) % PLAYER_COLORS.length
+          if (!used.has(PLAYER_COLORS[i])) break
+        }
+        if (!used.has(PLAYER_COLORS[i]) && PLAYER_COLORS[i] !== pad.color) {
+          pad.color = PLAYER_COLORS[i]
+          broadcastRoom(room)
+        }
         return
       }
       case 'player-logo':

@@ -1,0 +1,459 @@
+/*
+ * Lobby TV „Tanki Tankers” — zielony terminal (wzór: lobby_projekt.html).
+ * Kolory jak pad telefonu; zmiana wyglądu = zmienne niżej. Rozmiary w vh/vw (telewizor).
+ */
+.tt {
+  --tt-tlo: #030603;
+  --tt-siatka: rgba(125, 255, 58, 0.05);
+  --tt-panel: rgba(125, 255, 58, 0.03);
+  --tt-panel-jasny: rgba(125, 255, 58, 0.06);
+  --tt-linia: #1d4d0a;
+  --tt-linia-jasna: #3fae16;
+  --tt-zielen: #7dff3a;
+  --tt-swiat: rgba(125, 255, 58, 0.45);
+  --tt-zolty: #d4ff3a;
+  --tt-tekst: #d8ffc4;
+  --tt-tekst-2: #6fa35a;
+  --tt-uwaga: #ff5a3a;
+  --tt-font: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  --tt-font-tytul: 'Chakra Petch', 'Segoe UI', Arial, sans-serif;
+  --tt-rog: 1.4vh;
+
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background:
+    linear-gradient(var(--tt-siatka) 1px, transparent 1px) 0 0 / 3.2vh 3.2vh,
+    linear-gradient(90deg, var(--tt-siatka) 1px, transparent 1px) 0 0 / 3.2vh 3.2vh,
+    radial-gradient(ellipse at 50% 40%, #0a1806 0%, var(--tt-tlo) 70%);
+  color: var(--tt-tekst);
+  font: 400 2.2vh/1.45 var(--tt-font);
+}
+.tt p,
+.tt h1,
+.tt h2 {
+  margin: 0;
+}
+
+/* ===== siatka strony: nagłówek / treść / stopka ===== */
+.tt-strona {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 2vh;
+  padding: 2.5vh 3vw 2.2vh;
+  box-sizing: border-box;
+}
+.tt-strona::before {
+  content: '';
+  position: absolute;
+  inset: 1.2vh 1.2vw;
+  border: 1px solid var(--tt-linia);
+  pointer-events: none;
+}
+.tt-czekanie {
+  grid-template-rows: auto;
+  align-content: center;
+  justify-items: center;
+}
+
+/* ===== nagłówek ===== */
+.tt-naglowek {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2vw;
+}
+.tt-logo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vh;
+}
+.tt-etykieta {
+  color: var(--tt-tekst-2);
+  font-size: 1.8vh;
+  letter-spacing: 0.12em;
+}
+.tt-tytul {
+  font: 700 8vh/0.95 var(--tt-font-tytul);
+  color: var(--tt-zielen);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 2.4vh var(--tt-swiat);
+}
+.tt-pokoj {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6vh;
+}
+.tt-pokoj small {
+  color: var(--tt-tekst-2);
+  font-size: 1.8vh;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.tt-pokoj small::before {
+  content: '> ';
+  color: var(--tt-zielen);
+}
+.tt-pokoj b {
+  font: 700 7vh/1 var(--tt-font-tytul);
+  color: var(--tt-zolty);
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 2vh rgba(212, 255, 58, 0.35);
+}
+
+/* ===== treść: 3 kolumny + pasek XP ===== */
+.tt-tresc {
+  display: grid;
+  grid-template-columns: auto 1fr minmax(28vw, auto);
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    'dolacz gracze ustawienia'
+    'xp     xp     xp';
+  gap: 2vh;
+  min-height: 0;
+}
+.tt-panel {
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-linia-jasna);
+  clip-path: polygon(
+    var(--tt-rog) 0,
+    100% 0,
+    100% calc(100% - var(--tt-rog)),
+    calc(100% - var(--tt-rog)) 100%,
+    0 100%,
+    0 var(--tt-rog)
+  );
+  padding: 2.2vh;
+  min-width: 0;
+}
+.tt-panel h2 {
+  font: 600 1.8vh/1 var(--tt-font);
+  color: var(--tt-zielen);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-bottom: 1.8vh;
+}
+.tt-panel h2::before {
+  content: '// ';
+  color: var(--tt-tekst-2);
+}
+
+/* --- kolumna 1: dołącz (QR) --- */
+.tt-dolacz {
+  grid-area: dolacz;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.tt .tv-qr {
+  width: 30vh;
+  height: 30vh;
+  background: var(--tt-tekst);
+  padding: 1.2vh;
+  box-sizing: border-box;
+  box-shadow: 0 0 3vh rgba(125, 255, 58, 0.25);
+}
+.tt-adres {
+  margin-top: 1.4vh !important;
+  max-width: 30vh;
+  color: var(--tt-tekst-2);
+  font-size: 1.7vh;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* --- kolumna 2: gracze --- */
+.tt-gracze {
+  grid-area: gracze;
+  display: flex;
+  flex-direction: column;
+}
+.tt-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1vh;
+}
+.tt-gracz {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: center;
+  gap: 1.6vh;
+  background: var(--tt-panel-jasny);
+  border: 1px solid var(--tt-linia);
+  border-left: 0.6vh solid var(--kolor);
+  padding: 0.9vh 1.6vh;
+}
+.tt-wolny {
+  opacity: 0.35;
+  --kolor: var(--tt-linia-jasna) !important;
+}
+.tt-kolko {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.tt-pusty {
+  border: 1px dashed var(--tt-linia-jasna);
+  color: var(--tt-tekst-2);
+}
+.tt-pusty svg {
+  width: 55%;
+  height: 55%;
+}
+/* awatar: ciemny rysunek na jasnym kółku */
+.tt .profile-logo {
+  background: var(--tt-tekst);
+  color: var(--tt-tlo);
+  box-shadow: 0 0 1.4vh rgba(125, 255, 58, 0.35);
+}
+.tt-opis {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3vh;
+  min-width: 0;
+}
+.tt-nazwa {
+  font: 700 3.3vh/1.1 var(--tt-font-tytul);
+  color: var(--tt-tekst);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt-szczegoly {
+  color: var(--tt-tekst-2);
+  font-size: 1.8vh;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.tt-szczegoly b {
+  color: var(--tt-zolty);
+  font-weight: 600;
+}
+.tt-zmiana {
+  display: flex;
+  gap: 0.6vh;
+}
+.tt-kolor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2vh;
+}
+.tt-czolg {
+  width: 3.6vh;
+  height: 3.6vh;
+  color: var(--kolor);
+  filter: drop-shadow(0 0 0.6vh var(--kolor));
+}
+body.party .tt .tt-kolor .tt-ikona {
+  padding: 0 0.8vh;
+}
+.tt-kolor .tt-ikona svg {
+  width: 1.6vh;
+  height: 1.6vh;
+}
+.tt-wskazowka {
+  margin-top: 1.6vh !important;
+  color: var(--tt-tekst-2);
+  font-size: 1.8vh;
+}
+.tt-wynik {
+  margin-top: 1.2vh !important;
+  color: var(--tt-zolty);
+  font-size: 2vh;
+}
+.tt-uwaga {
+  color: var(--tt-uwaga);
+  font-size: 2vh;
+}
+.tt-dzwiek {
+  text-align: center;
+}
+
+/* --- kolumna 3: ustawienia --- */
+.tt-ustawienia {
+  grid-area: ustawienia;
+  display: flex;
+  flex-direction: column;
+}
+.tt-opcja {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.5vh 1.4vh;
+  padding: 1.2vh 0;
+  border-bottom: 1px dashed var(--tt-linia);
+}
+.tt-opcja:last-child {
+  border-bottom: 0;
+}
+.tt-opcja-nazwa {
+  color: var(--tt-tekst-2);
+  text-transform: uppercase;
+  font-size: 1.8vh;
+  letter-spacing: 0.08em;
+}
+.tt-opcja-nazwa::after {
+  content: ':';
+}
+.tt-wybor {
+  display: flex;
+  align-items: center;
+  gap: 0.8vh;
+  justify-self: end;
+}
+.tt-wartosc {
+  font-weight: 600;
+  color: var(--tt-zolty);
+  min-width: 8ch;
+  text-align: center;
+}
+.tt-opcja small {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8vh 1.2vh;
+  color: var(--tt-tekst-2);
+  font-size: 1.6vh;
+}
+
+/* przyciski: obrys zieleni, aktywny wypełniony */
+body.party .tt .tt-btn,
+body.party .tt .tv-toggle {
+  font: 600 1.8vh var(--tt-font);
+  height: auto;
+  min-height: 0;
+  color: var(--tt-zielen);
+  background: transparent;
+  border: 1px solid var(--tt-linia-jasna);
+  border-radius: 0;
+  clip-path: none;
+  box-shadow: none;
+  padding: 0.8vh 1.6vh;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+body.party .tt .tt-btn:hover,
+body.party .tt .tv-toggle:hover {
+  background: rgba(125, 255, 58, 0.1);
+  box-shadow: 0 0 1.2vh var(--tt-swiat);
+}
+body.party .tt .tt-btn.on,
+body.party .tt .tv-toggle.on {
+  background: var(--tt-zielen);
+  border-color: var(--tt-zielen);
+  color: var(--tt-tlo);
+}
+body.party .tt .tt-btn.on::before,
+body.party .tt .tv-toggle.on::before {
+  content: '> ';
+}
+body.party .tt .tt-ikona {
+  padding: 0.7vh;
+  line-height: 0;
+}
+body.party .tt .tt-ikona::before {
+  content: none;
+}
+.tt-ikona svg {
+  width: 2.2vh;
+  height: 2.2vh;
+}
+body.party .tt .tt-puste {
+  visibility: hidden;
+  display: inline-block;
+  width: calc(1.6vh + 1.6vh + 2px);
+  height: calc(1.6vh + 2px);
+}
+body.party .tt .tt-maly-btn {
+  font-size: 1.5vh;
+  padding: 0.4vh 1vh;
+}
+.tt-segment {
+  display: flex;
+}
+body.party .tt .tt-segment .tt-btn + .tt-btn {
+  border-left: 0;
+}
+/* głośność (VolumeControl) w wierszu ustawień: własny podpis chowamy */
+.tt .tv-volume {
+  display: flex;
+  margin: 0;
+  gap: 0;
+}
+.tt .tv-volume > .tv-muted {
+  display: none;
+}
+body.party .tt .tv-volume .tv-toggle + .tv-toggle {
+  border-left: 0;
+}
+
+/* --- pasek XP --- */
+.tt-xp {
+  grid-area: xp;
+  padding: 1.4vh 2.4vh;
+}
+body.party .tt .xp-lobby-button {
+  display: flex;
+  align-items: center;
+  gap: 3vh;
+  flex-wrap: wrap;
+  font-family: var(--tt-font);
+  color: var(--tt-tekst-2);
+}
+body.party .tt .xp-lobby-button b {
+  font: 700 3.4vh var(--tt-font-tytul);
+  color: var(--tt-zolty);
+}
+body.party .tt .xp-lobby-button > button {
+  margin-left: auto;
+  font: 600 1.8vh var(--tt-font);
+  height: auto;
+  padding: 0.8vh 1.6vh;
+  color: var(--tt-tlo);
+  background: var(--tt-zielen);
+  border: 1px solid var(--tt-zielen);
+  clip-path: none;
+  text-transform: uppercase;
+}
+body.party .tt .xp-lobby-button > button::before {
+  content: '> ';
+}
+
+/* ===== stopka: sterowanie ===== */
+.tt-stopka {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8vh 3vh;
+  color: var(--tt-tekst-2);
+  font-size: 1.8vh;
+  text-transform: uppercase;
+  border-top: 1px dashed var(--tt-linia);
+  padding-top: 1.4vh;
+}
+.tt-stopka > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6vh;
+}
+.tt kbd {
+  font: 600 1.6vh var(--tt-font);
+  color: var(--tt-zielen);
+  border: 1px solid var(--tt-linia-jasna);
+  padding: 0.1vh 0.7vh;
+}
+.tt-maly {
+  color: var(--tt-tekst-2);
+}

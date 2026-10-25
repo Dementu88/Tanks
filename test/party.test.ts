@@ -248,6 +248,54 @@ describe('party server', () => {
     for (const c of [tv, pad]) c.ws.close()
   })
 
+  it('kolor czołgu: wybór w lobby bez powtórek, w grze steruje się czołgiem w tym kolorze', async () => {
+    const tv = connect(port, KEY)
+    await tv.opened
+    tv.send({ t: 'tv' })
+    const code = (await tv.waitFor((m) => m.t === 'joined')).code
+    const pads = [connect(port, KEY), connect(port, KEY)]
+    for (const [i, pad] of pads.entries()) {
+      await pad.opened
+      pad.send({ t: 'pad', code })
+      expect((await pad.waitFor((m) => m.t === 'joined')).slot).toBe(i)
+    }
+    type Room = { padColors: (string | null)[]; playing: boolean }
+    const colors = (want: string[]) =>
+      tv.waitFor(
+        (m) => m.t === 'room' && (m.room as Room).padColors.slice(0, 2).join() === want.join(),
+      )
+    await colors(['yellow', 'green'])
+    // zielony zajęty — gracz 1 przeskakuje na niebieski
+    pads[0].send({ t: 'color', delta: 1 })
+    await colors(['blue', 'green'])
+    // żółty wolny — gracz 2 cofa się na żółty
+    pads[1].send({ t: 'color', delta: -1 })
+    await colors(['blue', 'yellow'])
+
+    pads[0].send({ t: 'start' })
+    type Tuple = number[]
+    const tankOf = (color: number): Tuple | undefined => {
+      for (let i = tv.seen.length - 1; i >= 0; i -= 1) {
+        const m = tv.seen[i]
+        if (m.t !== 'f') continue
+        const tanks = (m.scene as { tanks: Tuple[] } | null)?.tanks ?? []
+        return tanks.find((t) => t[1] === 0 && t[3] === color)
+      }
+      return undefined
+    }
+    const BLUE = 4 // lan/frame COLORS
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    for (let i = 0; i < 100 && tankOf(BLUE) == null; i += 1) await wait(100)
+    const start = tankOf(BLUE)!
+    expect(start).toBeDefined()
+    // w trakcie gry koloru nie da się zmienić
+    pads[0].send({ t: 'color', delta: 1 })
+    pads[0].send({ t: 'in', b: 1 }) // jazda w górę
+    await wait(600)
+    expect(tankOf(BLUE)![6]).toBeLessThan(start[6])
+    for (const c of [tv, ...pads]) c.ws.close()
+  })
+
   it('pad bez telewizora dostaje błąd', async () => {
     const pad = connect(port, KEY)
     await pad.opened

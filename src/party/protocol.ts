@@ -1,6 +1,6 @@
 import type { PlayerLevelStats } from '../engine/tankStats'
 import type { XpConfig, XpState, XpTrait } from '../engine/sessionXp'
-import type { PowerUpName } from '../engine/types'
+import type { PowerUpName, TankColor } from '../engine/types'
 import type { FrameMessage } from '../lan/frame'
 import type { LanResult } from '../lan/protocol'
 
@@ -57,6 +57,8 @@ export interface PartyRoomState {
   players?: { id: string; name: string; logo: string; xp: number }[]
   /** profil gracza wybrany przez każdy pad (null = gość) */
   padPlayers?: (string | null)[]
+  /** kolor czołgu każdego pada (wybór w lobby) */
+  padColors?: (TankColor | null)[]
   /** krótkie statystyki gracza przy każdym padzie */
   padStats?: ({
     games: number
@@ -130,6 +132,8 @@ export type PartyClientMessage =
   | { t: 'restart' }
   | { t: 'pause' }
   | { t: 'quit' }
+  /** lobby: kolor czołgu (kolejny wolny w górę / w dół) */
+  | { t: 'color'; delta: number }
   /** tryb developera (tylko serwer lokalny / PARTY_DEV=1) */
   | { t: 'dev'; action: DevAction }
 

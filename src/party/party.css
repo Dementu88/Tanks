@@ -1196,3 +1196,17 @@ body.party .pad-logo-step svg {
   width: 14px;
   height: 14px;
 }
+
+/* lobby na padzie: czołg w wybranym kolorze, dotknięcie zmienia kolor */
+body.party .pad-color {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+body.party .pad-color svg {
+  color: var(--tank, currentColor);
+  filter: drop-shadow(0 0 4px var(--tank, transparent));
+}
