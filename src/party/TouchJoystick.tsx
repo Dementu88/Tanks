@@ -49,18 +49,17 @@ export default function TouchJoystick({
   }
   const resetRef = useRef(reset)
   resetRef.current = reset
+  // bez zwalniania przy „resize”: telefon wysyła je, gdy chowa / pokazuje pasek adresu w trakcie
+  // jazdy — czołg stawał. Obrót telefonu zwalnia gałkę przez zmianę `rotated` (efekt niżej).
   useEffect(() => {
     const blur = () => resetRef.current('blur')
-    const resize = () => resetRef.current('resize')
     const hidden = () => {
       if (document.hidden) resetRef.current('hidden')
     }
     window.addEventListener('blur', blur)
-    window.addEventListener('resize', resize)
     document.addEventListener('visibilitychange', hidden)
     return () => {
       window.removeEventListener('blur', blur)
-      window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', hidden)
     }
   }, [])

@@ -114,4 +114,28 @@ describe('dotykowe sterowanie', () => {
     act(() => window.dispatchEvent(new Event('blur')))
     expect(onChange).toHaveBeenLastCalledWith(false)
   })
+
+  it('zmiana rozmiaru okna (pasek adresu telefonu) nie zatrzymuje jazdy ani ognia', () => {
+    const onStick = vi.fn()
+    const onFire = vi.fn()
+    act(() =>
+      root.render(
+        createElement('div', null, [
+          createElement(TouchJoystick, { key: 's', stick: IDLE_STICK, onChange: onStick }),
+          createElement(FireButton, { key: 'f', pressed: false, onChange: onFire, vibration: 0 }),
+        ]),
+      ),
+    )
+    const stick = host.querySelector('.pad-stick')!
+    const fire = host.querySelector('.pad-fire')!
+    geometry(stick)
+    geometry(fire)
+    pointer(stick, 'pointerdown', 1, 180, 100)
+    pointer(fire, 'pointerdown', 2)
+    act(() => window.dispatchEvent(new Event('resize')))
+    expect(onStick).toHaveBeenLastCalledWith({ direction: 'right', turnOnly: false })
+    expect(onFire).toHaveBeenLastCalledWith(true)
+    pointer(stick, 'pointerup', 1)
+    expect(onStick).toHaveBeenLastCalledWith(IDLE_STICK)
+  })
 })

@@ -233,10 +233,24 @@ export default function PadScreen({
       </div>
       <div className="pad-right">
         <div className="pad-top" style={{ minHeight: TOP_BAR }}>
-          <div className="pad-player">
-            <TankIcon />
-            GRACZ {slot + 1}
-          </div>
+          {playing ? (
+            <div className="pad-player">
+              <TankIcon />
+              GRACZ {slot + 1}
+            </div>
+          ) : (
+            // lobby: dotknięcie czołgu = następny wolny kolor
+            <button
+              type="button"
+              className="pad-player pad-color"
+              aria-label="Zmień kolor czołgu"
+              style={{ ['--tank' as string]: TANK_HEX[room.padColors?.[slot] ?? ''] }}
+              onClick={() => sendParty({ t: 'color', delta: 1 })}
+            >
+              <TankIcon />
+              GRACZ {slot + 1}
+            </button>
+          )}
           {!connected && <span className="pad-warn">BRAK POŁĄCZENIA</span>}
           <div className="pad-spacer" />
           {playing ? (
@@ -365,16 +379,46 @@ function readLayout(): PadLayout {
   return { rotated: h > w, width: Math.max(w, h), height: Math.min(w, h) }
 }
 
-/** pad jest zawsze poziomy: gdy ekran jest pionowy, obracamy go zamiast przestawiać układ */
+/**
+ * pad jest zawsze poziomy: gdy ekran jest pionowy, obracamy go zamiast przestawiać układ.
+ * Zmiana rozmiaru (telefon chowa / pokazuje pasek adresu) wchodzi dopiero po puszczeniu palców —
+ * w trakcie jazdy joystick nie zmienia rozmiaru ani miejsca. Obrót telefonu — od razu.
+ */
 export function usePadLayout(): PadLayout {
   const [layout, setLayout] = useState(readLayout)
+  const current = useRef(layout)
+  current.current = layout
   useEffect(() => {
-    const onResize = () => setLayout(readLayout())
+    const held = new Set<number>()
+    let pending = false
+    const apply = () => {
+      pending = false
+      const next = readLayout()
+      const now = current.current
+      if (next.rotated !== now.rotated || next.width !== now.width || next.height !== now.height) {
+        setLayout(next)
+      }
+    }
+    const onResize = () => {
+      if (held.size === 0 || readLayout().rotated !== current.current.rotated) apply()
+      else pending = true
+    }
+    const down = (e: PointerEvent) => held.add(e.pointerId)
+    const up = (e: PointerEvent) => {
+      held.delete(e.pointerId)
+      if (held.size === 0 && pending) apply()
+    }
     window.addEventListener('resize', onResize)
     window.addEventListener('orientationchange', onResize)
+    document.addEventListener('pointerdown', down, true)
+    document.addEventListener('pointerup', up, true)
+    document.addEventListener('pointercancel', up, true)
     return () => {
       window.removeEventListener('resize', onResize)
       window.removeEventListener('orientationchange', onResize)
+      document.removeEventListener('pointerdown', down, true)
+      document.removeEventListener('pointerup', up, true)
+      document.removeEventListener('pointercancel', up, true)
     }
   }, [])
   return layout
@@ -529,12 +573,11 @@ export function FireButton({
     const hidden = () => {
       if (document.hidden) reset()
     }
+    // bez „resize” (pasek adresu telefonu) — jak przy joysticku
     window.addEventListener('blur', reset)
-    window.addEventListener('resize', reset)
     document.addEventListener('visibilitychange', hidden)
     return () => {
       window.removeEventListener('blur', reset)
-      window.removeEventListener('resize', reset)
       document.removeEventListener('visibilitychange', hidden)
     }
   }, [])
@@ -576,6 +619,14 @@ export function FireButton({
       <span className="pad-label">OGIEŃ</span>
     </div>
   )
+}
+
+/** kolory czołgów graczy na padzie (jak sprite'y w grze) */
+const TANK_HEX: Record<string, string> = {
+  yellow: '#e7ad3e',
+  green: '#96d332',
+  blue: '#5aa9ff',
+  purple: '#d77bff',
 }
 
 // ---------- ikony ----------
