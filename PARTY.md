@@ -3,7 +3,8 @@
 - `#/tv` (albo krótko `/tv`): ekran telewizora. Zakłada pokój z 4-cyfrowym kodem i pokazuje QR.
   Kolejne TV otwierają `#/tv/<kod>` i pokazują tę samą planszę. Dopisek `?mute` wycisza dźwięk,
   np. na drugim TV.
-- `#/pad/<kod>`: pad na telefonie. Lewy okrąg to joystick, prawy to OGIEŃ, a pośrodku są START,
+- `#/pad/<kod>`: pad na telefonie. Z lewej krzyżak ze strzałek (palec można przesuwać ze strzałki na
+  strzałkę; joystick gubił dotyk na iPhonie), z prawej OGIEŃ, a pośrodku są START,
   plansza i pauza. Mieszczą się 2 pady; gra startuje z tyloma graczami, ilu jest podłączonych.
 - Do **4 graczy** (żółty, zielony, niebieski, fioletowy). Gracze 3 i 4 startują w dolnym rzędzie
   w kolumnach 2 i 10 — plansza robi im tam miejsce. Trudność zależnie od liczby graczy:

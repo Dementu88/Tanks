@@ -39,17 +39,16 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('pad gry używa profilu stable mimo starego zapisu, stabilizuje skręt i wysyła STOP', () => {
+it('pad gry: strzałki zamiast joysticka, czułość z profilu stable, STOP po utracie fokusu', () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('innerWidth', 844)
   vi.stubGlobal('innerHeight', 390)
-  localStorage.setItem('party-turn-zone', '0.7')
   const host = document.createElement('div')
   document.body.appendChild(host)
   const root = createRoot(host)
   try {
     act(() => root.render(createElement(PadScreen, { code: '1234', accessKey: null })))
-    expect(host.querySelector('input')?.value).toBe('0.3')
+    expect(host.querySelector('.pad-stick')).toBeNull()
     expect(
       host.querySelector<HTMLInputElement>('[aria-label="Czułość — siatka skrętu"]')?.value,
     ).toBe('8')
@@ -66,49 +65,30 @@ it('pad gry używa profilu stable mimo starego zapisu, stabilizuje skręt i wysy
     act(() => host.querySelector('[aria-label="Czułość — siatka skrętu"]')!.dispatchEvent(key))
     expect(key.defaultPrevented).toBe(false)
     expect(sendParty).not.toHaveBeenCalled()
-    const stick = host.querySelector('.pad-stick')!
-    const captured = new Set<number>()
-    stick.setPointerCapture = (id) => {
-      captured.add(id)
-    }
-    stick.hasPointerCapture = (id) => captured.has(id)
-    stick.releasePointerCapture = (id) => {
-      captured.delete(id)
-    }
-    vi.spyOn(stick, 'getBoundingClientRect').mockReturnValue({
-      left: 0,
-      top: 0,
-      x: 0,
-      y: 0,
-      width: 200,
-      height: 200,
-      right: 200,
-      bottom: 200,
-      toJSON: () => ({}),
-    })
-    const pointer = (type: string, x: number, y: number) => {
+    const pad = host.querySelector('.pad-arrows')!
+    pad.setPointerCapture = () => {}
+    pad.hasPointerCapture = () => false
+    pad.releasePointerCapture = () => {}
+    let under = host.querySelector('[data-dir="right"]')
+    document.elementFromPoint = () => under
+    const pointer = (type: string) => {
       const event = new Event(type, { bubbles: true })
-      Object.assign(event, { pointerId: 1, clientX: x, clientY: y, button: 0 })
-      act(() => stick.dispatchEvent(event))
+      Object.assign(event, { pointerId: 1, clientX: 0, clientY: 0, button: 0 })
+      act(() => pad.dispatchEvent(event))
     }
-    const right = encodePadInput({ direction: 'right', turnOnly: false, fire: false })
-    pointer('pointerdown', 126, 100)
-    expect(sendParty).toHaveBeenLastCalledWith({ t: 'in', b: right })
-    pointer('pointermove', 150, 49)
-    expect(sendParty).toHaveBeenLastCalledWith({ t: 'in', b: right })
-    pointer('pointermove', 150, 30)
+    pointer('pointerdown')
     expect(sendParty).toHaveBeenLastCalledWith({
       t: 'in',
-      b: encodePadInput({
-        direction: 'up',
-        turnOnly: false,
-        fire: false,
-      }),
+      b: encodePadInput({ direction: 'right', turnOnly: false, fire: false }),
+    })
+    under = host.querySelector('[data-dir="up"]')
+    pointer('pointermove')
+    expect(sendParty).toHaveBeenLastCalledWith({
+      t: 'in',
+      b: encodePadInput({ direction: 'up', turnOnly: false, fire: false }),
     })
     act(() => window.dispatchEvent(new Event('blur')))
     expect(sendParty).toHaveBeenLastCalledWith({ t: 'in', b: 0 })
-    expect(localStorage.getItem('party-turn-zone')).toBe('0.7')
-    expect(localStorage.getItem('party-turn-zone-stable')).toBe('0.3')
   } finally {
     act(() => root.unmount())
     host.remove()

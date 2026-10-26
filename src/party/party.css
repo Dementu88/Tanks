@@ -1210,3 +1210,61 @@ body.party .pad-color svg {
   color: var(--tank, currentColor);
   filter: drop-shadow(0 0 4px var(--tank, transparent));
 }
+
+/* ---------- krzyżak ze strzałek (zamiast joysticka) ---------- */
+.pad-left .pad-arrows {
+  width: 100%;
+  height: 100%;
+}
+.pad-arrows {
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  gap: 6px;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.pad-arrow {
+  position: relative;
+  border: 1px solid var(--red-mid);
+  background: rgba(var(--hud-dark-rgb), 0.45);
+  border-radius: 6px;
+}
+.pad-arrow-up {
+  grid-area: 1 / 2;
+}
+.pad-arrow-left {
+  grid-area: 2 / 1;
+}
+.pad-arrow-right {
+  grid-area: 2 / 3;
+}
+.pad-arrow-down {
+  grid-area: 3 / 2;
+}
+/* svg pod spodem całej strzałki — trafienie liczy się po kafelku, nie po trójkącie */
+.pad-arrows .pad-arrow svg {
+  pointer-events: none;
+}
+.pad-arrow path {
+  fill: var(--red-mid);
+}
+.pad-arrow.active {
+  border-color: var(--red);
+  background: rgba(var(--hud-rgb), 0.22);
+  box-shadow: 0 0 14px rgba(var(--hud-rgb), 0.5);
+}
+.pad-arrow.active path {
+  fill: var(--red);
+  filter: var(--glow);
+}
+.pad-arrows-stop {
+  grid-area: 2 / 2;
+  align-self: center;
+  justify-self: center;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--red-mid);
+  pointer-events: none;
+}

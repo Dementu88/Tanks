@@ -5,9 +5,9 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
-import Joystick from './TouchJoystick'
+import ArrowPad from './ArrowPad'
 import XpPanel from './XpPanel'
-import { IDLE_STICK as IDLE, STABLE_STICK, type StickState } from './stick'
+import { IDLE_STICK as IDLE, type StickState } from './stick'
 import { push, replace } from '../ui/router'
 import {
   connectParty,
@@ -31,17 +31,12 @@ import { PlayerPicker, useRememberedPlayer } from './PlayerProfile'
 import { PromotionToast } from './RankBadge'
 import './ranks.css'
 import { useBodyClass } from './shared'
+import { watchStaleTouches } from './touchGuard'
 import '@fontsource/orbitron/500.css'
 import '@fontsource/orbitron/700.css'
 import './party.css'
 import { validTurnSnap } from '../engine/physics/turnAlignment'
 
-/** granica obrót/jazda — domyślna; każdy telefon ustawia swoją suwakiem pod padem */
-const TURN_ZONE_DEFAULT = STABLE_STICK.turnZone
-const TURN_ZONE_MIN = 0.2
-const TURN_ZONE_MAX = 0.75
-// Stary próg nie może nadpisać sprawdzonego profilu przy pierwszym uruchomieniu stable.
-const TURN_ZONE_STORAGE = 'party-turn-zone-stable'
 const SENSITIVITY_STORAGE = 'party-turn-snap-stable'
 
 function savedSensitivity(): number {
@@ -55,15 +50,6 @@ function savedSensitivity(): number {
   return 8
 }
 
-function savedTurnZone(): number {
-  try {
-    const v = Number(localStorage.getItem(TURN_ZONE_STORAGE))
-    if (v >= TURN_ZONE_MIN && v <= TURN_ZONE_MAX) return v
-  } catch {
-    // prywatne okno
-  }
-  return TURN_ZONE_DEFAULT
-}
 const vibrate = (ms: number) => {
   try {
     navigator.vibrate?.(ms)
@@ -83,7 +69,7 @@ function savedSlot(code: string): number | undefined {
   }
 }
 
-/** Telefon jako pad: joystick (obrót / jazda) + ogień, u góry START, plansza i pauza. */
+/** Telefon jako pad: strzałki (jazda) + ogień, u góry START, plansza i pauza. */
 export default function PadScreen({
   code,
   accessKey,
@@ -101,7 +87,6 @@ export default function PadScreen({
   const full = usePartyStore((s) => s.full)
   const replaced = usePartyStore((s) => s.replaced)
   const [stick, setStick] = useState<StickState>(IDLE)
-  const [turnZone, setTurnZone] = useState(savedTurnZone)
   const [turnSnap, setTurnSnap] = useState(savedSensitivity)
   const [fire, setFire] = useState(false)
   const hardware = useHardwarePad(room)
@@ -142,14 +127,6 @@ export default function PadScreen({
   useEffect(() => {
     sendParty({ t: 'in', b: bits })
   }, [bits, connected])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(TURN_ZONE_STORAGE, String(turnZone))
-    } catch {
-      // prywatne okno — ustawienie tylko do odświeżenia
-    }
-  }, [turnZone])
 
   useEffect(() => {
     try {
@@ -224,12 +201,8 @@ export default function PadScreen({
       }}
     >
       <div className="pad-left" style={{ width: side, height: side }}>
-        <Joystick
-          stick={activeStick}
-          onChange={setStick}
-          rotated={layout.rotated}
-          settings={{ ...STABLE_STICK, turnZone }}
-        />
+        {/* zwykłe strzałki zamiast joysticka (joystick gubił dotyk na iPhonie) */}
+        <ArrowPad onChange={setStick} />
       </div>
       <div className="pad-right">
         <div className="pad-top" style={{ minHeight: TOP_BAR }}>
@@ -314,18 +287,6 @@ export default function PadScreen({
         </div>
         {!playing && <PlayerPicker room={room} slot={slot} />}
         <div className="pad-tuning" onKeyDown={(e) => e.stopPropagation()}>
-          <label className="pad-zone">
-            <span>STREFA OBROTU</span>
-            <input
-              type="range"
-              min={TURN_ZONE_MIN}
-              max={TURN_ZONE_MAX}
-              step={0.01}
-              value={turnZone}
-              onChange={(e) => setTurnZone(Number(e.target.value))}
-              aria-label="Wielkość strefy samego obrotu w joysticku"
-            />
-          </label>
           <label className="pad-zone">
             <span>
               CZUŁOŚĆ{' '}
@@ -559,9 +520,34 @@ export function FireButton({
   vibration?: number
 }) {
   const pointer = useRef<number | null>(null)
+  const heldSince = useRef(0)
+  /** dotknięcie odrzucone, bo przycisk „trzymał” wcześniejszy palec */
+  const rejected = useRef<number | null>(null)
   const element = useRef<HTMLDivElement>(null)
   const callback = useRef(onChange)
   callback.current = onChange
+  // iOS: zgubiony pointerup — ogień puszcza się, gdy nie leży na nim już żaden palec
+  useEffect(
+    () =>
+      watchStaleTouches({
+        element: () => element.current,
+        heldSince: () => (pointer.current == null ? null : heldSince.current),
+        release: (adopt) => {
+          pointer.current = null
+          const next = rejected.current
+          rejected.current = null
+          if (adopt) {
+            // nowy palec na przycisku: trzymamy dalej, już jako ten palec
+            pointer.current = next ?? -1
+            heldSince.current = performance.now()
+            callback.current(true)
+          } else {
+            callback.current(false)
+          }
+        },
+      }),
+    [],
+  )
   useEffect(() => {
     const reset = () => {
       const id = pointer.current
@@ -594,9 +580,15 @@ export function FireButton({
       aria-pressed={pressed}
       className={`pad-ctrl pad-fire ${pressed ? 'active' : ''}`}
       onPointerDown={(e) => {
-        if (pointer.current != null || e.button !== 0) return
+        if (e.button !== 0) return
+        if (pointer.current != null) {
+          rejected.current = e.pointerId
+          return
+        }
         e.preventDefault()
+        rejected.current = null
         pointer.current = e.pointerId
+        heldSince.current = performance.now()
         e.currentTarget.setPointerCapture(e.pointerId)
         if (vibration > 0) vibrate(vibration)
         onChange(true)
